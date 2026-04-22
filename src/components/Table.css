@@ -1,0 +1,33 @@
+.react-resizable {
+  position: relative;
+  background-clip: padding-box;
+}
+
+.react-resizable-handle {
+  position: absolute !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 100 !important;
+  width: 4px !important;
+  height: 80% !important;
+  top: 10% !important;
+  cursor: col-resize !important;
+  transition: all 0.2s !important;
+  border-right: 2px solid #000000 !important; /* Solid Black */
+  opacity: 0.1;
+}
+
+.react-resizable-handle:hover {
+  opacity: 1;
+  border-right: 2px solid #000000 !important;
+  background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.react-resizable-handle:active {
+  opacity: 1;
+  border-right: 2px solid #5b4ce8 !important; /* Premium Blue for active state */
+}
+
+.ant-table-header th {
+  user-select: none;
+}

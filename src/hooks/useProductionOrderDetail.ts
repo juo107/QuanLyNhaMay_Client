@@ -94,7 +94,7 @@ export const useProductionOrderDetail = (id: string | undefined) => {
   // Thiết lập bộ lọc theo mã mẻ (Batch) và đồng bộ lên URL
   const setBatchFilter = useCallback((filter: string | null) => {
     navigate({
-      search: (prev: any) => ({ ...prev, batchFilter: filter || undefined }),
+      search: (prev: any) => ({ ...prev, batchFilter: filter === null ? undefined : filter }),
     });
   }, [navigate]);
 

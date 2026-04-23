@@ -68,7 +68,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter
             <div className="flex flex-wrap gap-2">
               <div
                 onClick={() => setSelectedBatchCode(null)}
-                className={`px-4 py-1.5 rounded-full border cursor-pointer text-xs font-bold transition-all duration-200 ${selectedBatchCode === null
+                className={`px-4 py-1.5 rounded-full border cursor-pointer text-xs font-bold transition-all duration-200 ${(selectedBatchCode === null || selectedBatchCode === undefined)
                   ? 'bg-[#5b4ce8] border-[#5b4ce8] text-white shadow-lg scale-105'
                   : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-[#5b4ce8] hover:text-[#5b4ce8]'
                   }`}

@@ -63,6 +63,16 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter
               <div className="w-1.5 h-6 bg-[#5b4ce8] rounded-full"></div>
               <label className="text-sm font-bold text-gray-800 uppercase tracking-tight">Số Lô (Batch Number)</label>
             </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-[#d4edda] border border-[#c3e6cb]"></div>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Đã tiêu thụ</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-[#fff3cd] border border-[#ffeaa7]"></div>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Chưa tiêu thụ</span>
+              </div>
+            </div>
           </div>
           <div className="p-1 max-h-[160px] overflow-y-auto custom-scrollbar">
             <div className="flex flex-wrap gap-2">
@@ -76,7 +86,11 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter
                 Tất cả
               </div>
               <div
-                onClick={() => setSelectedBatchCode("")}
+                onClick={() => {
+                  setSelectedBatchCode("");
+                  const hasConsumption = allMaterials.some(m => (!m.batchCode || m.batchCode.trim() === "") && m.id);
+                  setFilterType(hasConsumption ? 'consumed' : 'unconsumed');
+                }}
                 className={`px-4 py-1.5 rounded-full border cursor-pointer text-xs font-bold transition-all duration-200 ${selectedBatchCode === ""
                   ? 'bg-[#5b4ce8] border-[#5b4ce8] text-white shadow-lg scale-105'
                   : (allMaterials.some(m => (!m.batchCode || m.batchCode.trim() === "") && m.id)
@@ -93,7 +107,10 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter
                 return (
                   <div
                     key={batch.batchNumber}
-                    onClick={() => setSelectedBatchCode(batchNumNormalized)}
+                    onClick={() => {
+                      setSelectedBatchCode(batchNumNormalized);
+                      setFilterType(hasConsumption ? 'consumed' : 'unconsumed');
+                    }}
                     className={`px-4 py-1.5 rounded-full border cursor-pointer text-xs font-bold transition-all duration-200 ${isSelected ? 'bg-[#5b4ce8] border-[#5b4ce8] text-white shadow-lg scale-105' :
                       (hasConsumption ? 'bg-[#d4edda] border-[#c3e6cb] text-[#155724] hover:border-[#a1d6ad]' : 'bg-[#fff3cd] border-[#ffeaa7] text-[#856404] hover:border-[#ffdb9a]')
                       }`}

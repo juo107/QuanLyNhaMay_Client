@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect } from 'react';
 import { Card, Row, Col, Statistic, Button, Tag, Tooltip, Typography, Descriptions, Spin, Empty, Table as AntdTable, Tabs } from 'antd';
 import { ExperimentOutlined, CheckCircleOutlined, HistoryOutlined, EyeOutlined } from '@ant-design/icons';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import dayjs from 'dayjs';
 import Table from '../components/Table';
 import FilterSearchBar from '../components/FilterSearchBar';
@@ -14,8 +14,10 @@ import type { IRecipe, IRecipeVersionItem } from '../types/recipeTypes';
 const { Text } = Typography;
 
 const Recipes: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate = useNavigate({ from: '/recipes' });
+  const routerState = useRouterState();
+  const locationState = (routerState.location.state as any);
+
   const {
     stats,
     data,
@@ -35,13 +37,13 @@ const Recipes: React.FC = () => {
   } = useRecipes();
 
   useEffect(() => {
-    const state = location.state as { reopenDrawer?: boolean; selectedRecipe?: IRecipe } | null;
+    const state = locationState as { reopenDrawer?: boolean; selectedRecipe?: IRecipe } | null;
     if (!state?.reopenDrawer || !state.selectedRecipe || restoredRef.current) return;
 
     restoredRef.current = true;
     openDetailDrawer(state.selectedRecipe);
-    navigate('/recipes', { replace: true });
-  }, [location.state, navigate, openDetailDrawer, restoredRef]);
+    navigate({ to: '/recipes', search: params as any, replace: true });
+  }, [locationState, navigate, openDetailDrawer, restoredRef]);
 
   const filterConfig = useMemo(() => getRecipeFilters(), []);
   const columns = useMemo(() => getRecipeColumns(openDetailDrawer), [openDetailDrawer]);
@@ -53,30 +55,30 @@ const Recipes: React.FC = () => {
         <p className="text-gray-500 text-sm">Quản lý dữ liệu chính công thức sản xuất</p>
       </div>
 
-      <Row gutter={16}>
-        <Col span={8}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Tổng số Công thức" value={stats.total} valueStyle={{ color: '#1677ff' }} prefix={<ExperimentOutlined />} />
+      <Row gutter={[16, 16]}>
+        <Col xs={12} sm={12} md={8}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Tổng số Công thức" value={stats.total} styles={{ content: { color: '#1677ff' } }} prefix={<ExperimentOutlined />} />
           </Card>
         </Col>
-        <Col span={8}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Công thức Hoạt động" value={stats.active} valueStyle={{ color: '#3f8600' }} prefix={<CheckCircleOutlined />} />
+        <Col xs={12} sm={12} md={8}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Công thức Hoạt động" value={stats.active} styles={{ content: { color: '#3f8600' } }} prefix={<CheckCircleOutlined />} />
           </Card>
         </Col>
-        <Col span={8}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Tổng Phiên bản" value={stats.totalVersions} valueStyle={{ color: '#fa8c16' }} prefix={<HistoryOutlined />} />
+        <Col xs={12} sm={12} md={8}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Tổng Phiên bản" value={stats.totalVersions} styles={{ content: { color: '#fa8c16' } }} prefix={<HistoryOutlined />} />
           </Card>
         </Col>
       </Row>
 
-      <Card bordered={false} className="shadow-sm">
+      <Card variant="borderless" className="shadow-sm">
         <FilterSearchBar
           filters={filterConfig}
           values={params as Record<string, any>}
           onChange={onFilterChange}
-          onRefresh={() => fetchRecipes(params)}
+          onRefresh={() => fetchRecipes()}
         />
         <Table
           rowKey="recipeDetailsId"
@@ -88,6 +90,12 @@ const Recipes: React.FC = () => {
           currentPage={params.page}
           pageSize={params.limit}
           onPageChange={onPageChange}
+          onRow={(record: any) => ({
+            onClick: () => {
+              openDetailDrawer(record);
+            },
+            className: 'cursor-pointer hover:bg-gray-50 transition-colors',
+          })}
         />
       </Card>
 
@@ -95,7 +103,6 @@ const Recipes: React.FC = () => {
         title="Chi tiết công thức"
         isOpen={isDetailDrawerOpen}
         onClose={closeDetailDrawer}
-        width={980}
       >
         {selectedRecipe && (
           <Tabs
@@ -105,7 +112,7 @@ const Recipes: React.FC = () => {
                 key: 'info',
                 label: 'Thông tin',
                 children: (
-                  <Descriptions column={2} bordered size="middle" labelStyle={{ width: 180 }}>
+                  <Descriptions column={2} bordered size="middle" styles={{ label: { width: 180 } }}>
                     <Descriptions.Item label="ID">{selectedRecipe.recipeDetailsId || '-'}</Descriptions.Item>
                     <Descriptions.Item label="Phiên bản hiện tại">
                       <Tag color="blue">v{selectedRecipe.version || '-'}</Tag>
@@ -147,34 +154,29 @@ const Recipes: React.FC = () => {
                         pagination={false}
                         dataSource={versionRows}
                         tableLayout="fixed"
+                        scroll={{ x: 800 }}
+                        onRow={(record: any) => ({
+                          onClick: () => {
+                            closeDetailDrawer();
+                            navigate({
+                              to: '/recipes/$id',
+                              params: { id: String(record.recipeDetailsId) },
+                              state: {
+                                fromDrawer: true,
+                                selectedRecipe: record,
+                              } as any,
+                            });
+                          },
+                          className: 'cursor-pointer hover:bg-gray-50 transition-colors',
+                        })}
                         columns={[
-                          { title: 'ID', dataIndex: 'recipeDetailsId', key: 'recipeDetailsId', width: 90 },
-                          { title: 'Version', dataIndex: 'version', key: 'version', width: 100, render: (v: string) => <Tag color="blue">{formatVersionDisplay(v)}</Tag> },
-                          {
-                            title: 'Product Code',
-                            dataIndex: 'productCode',
-                            key: 'productCode',
-                            width: 160,
-                            render: (value: string) => (
-                              <div style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                                {value || '-'}
-                              </div>
-                            ),
-                          },
-                          {
-                            title: 'Product Name',
-                            dataIndex: 'productName',
-                            key: 'productName',
-                            render: (value: string) => (
-                              <div style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                                {value || '-'}
-                              </div>
-                            ),
-                          },
+                          { title: 'ID', dataIndex: 'recipeDetailsId', key: 'recipeDetailsId', width: 70 },
+                          { title: 'Version', dataIndex: 'version', key: 'version', width: 90, render: (v: string) => <Tag color="blue">{formatVersionDisplay(v)}</Tag> },
                           {
                             title: 'Recipe Name',
                             dataIndex: 'recipeName',
                             key: 'recipeName',
+                            width: 250,
                             render: (value: string) => (
                               <div style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
                                 {value || '-'}
@@ -206,11 +208,13 @@ const Recipes: React.FC = () => {
                                   icon={<EyeOutlined style={{ color: '#5b4ce8', fontSize: '18px' }} />}
                                   onClick={() => {
                                     closeDetailDrawer();
-                                    navigate(`/recipes/${row.recipeDetailsId}`, {
+                                    navigate({
+                                      to: '/recipes/$id',
+                                      params: { id: String(row.recipeDetailsId) },
                                       state: {
                                         fromDrawer: true,
                                         selectedRecipe: row,
-                                      },
+                                      } as any,
                                     });
                                   }}
                                 />

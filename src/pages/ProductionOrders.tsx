@@ -1,26 +1,28 @@
-import React, { useMemo } from 'react';
-import { Card, Row, Col, Statistic, Button, Tag, Input, Typography, Pagination, Radio, Table as AntdTable } from 'antd';
 import {
-  FileTextOutlined,
-  CheckCircleOutlined,
-  PlayCircleOutlined,
-  ClockCircleOutlined,
   AppstoreOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  FileTextOutlined,
+  PlayCircleOutlined,
   UnorderedListOutlined
 } from '@ant-design/icons';
+import { Table as AntdTable, Button, Card, Col, Pagination, Radio, Row, Statistic, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
-import Table from '../components/Table';
-import FilterSearchBar from '../components/FilterSearchBar';
+import React, { useMemo } from 'react';
 import CardCommon from '../components/CardCommon';
+import FilterSearchBar from '../components/FilterSearchBar';
 import Modal from '../components/Modal';
-import { formatUnit } from '../utils/format';
-import { useProductionOrders } from '../hooks/useProductionOrders';
 import { getProductionOrderColumns } from '../components/ProductionOrder/ProductionOrderColumns';
+import Table from '../components/Table';
+import { useProductionOrders } from '../hooks/useProductionOrders';
+import { useResponsive } from '../hooks/useResponsive';
 import type { IProductionOrder } from '../types/productionOrderTypes';
+import { formatUnit } from '../utils/format';
 
 const { Text } = Typography;
 
 const ProductionOrders: React.FC = () => {
+  const { isMobile, isTablet } = useResponsive();
   const {
     viewMode,
     setViewMode,
@@ -29,8 +31,6 @@ const ProductionOrders: React.FC = () => {
     loading,
     total,
     params,
-    poInput,
-    setPoInput,
     isModalOpen,
     setIsModalOpen,
     selectedOrder,
@@ -39,7 +39,6 @@ const ProductionOrders: React.FC = () => {
     fetchData,
     onFilterChange,
     onPageChange,
-    onPoSearch,
     showDetail,
     filterConfig,
   } = useProductionOrders();
@@ -72,49 +71,35 @@ const ProductionOrders: React.FC = () => {
         </Radio.Group>
       </div>
 
-      <Row gutter={16}>
-        <Col span={6}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Tổng Lệnh SX" value={stats.total} valueStyle={{ color: '#1677ff' }} prefix={<FileTextOutlined />} />
+      <Row gutter={[16, 16]}>
+        <Col xs={12} sm={12} lg={6}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Tổng Lệnh SX" value={stats.total} styles={{ content: { color: '#1677ff' } }} prefix={<FileTextOutlined />} />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Đang Chạy" value={stats.inProgress} valueStyle={{ color: '#fa8c16' }} prefix={<PlayCircleOutlined />} />
+        <Col xs={12} sm={12} lg={6}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Đang Chạy" value={stats.inProgress} styles={{ content: { color: '#fa8c16' } }} prefix={<PlayCircleOutlined />} />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Hoàn Thành" value={stats.completed} valueStyle={{ color: '#3f8600' }} prefix={<CheckCircleOutlined />} />
+        <Col xs={12} sm={12} lg={6}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Hoàn Thành" value={stats.completed} styles={{ content: { color: '#3f8600' } }} prefix={<CheckCircleOutlined />} />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Đang Chờ" value={stats.stopped} valueStyle={{ color: '#1677ff' }} prefix={<ClockCircleOutlined />} />
+        <Col xs={12} sm={12} lg={6}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Đang Chờ" value={stats.stopped} styles={{ content: { color: '#1677ff' } }} prefix={<ClockCircleOutlined />} />
           </Card>
         </Col>
       </Row>
 
-      <Card bordered={false} className="shadow-sm">
+      <Card variant="borderless" className="shadow-sm">
         <FilterSearchBar
           filters={filterConfig}
           values={params as Record<string, any>}
           onChange={onFilterChange}
-          onRefresh={() => fetchData(params)}
-          extraActions={
-            <Input.Search
-              placeholder="Nhập mã PO..."
-              value={poInput}
-              onChange={e => setPoInput(e.target.value)}
-              onSearch={onPoSearch}
-              style={{ width: 220 }}
-              allowClear
-              onClear={() => {
-                setPoInput('');
-                onPoSearch('');
-              }}
-            />
-          }
+          onRefresh={() => fetchData()}
         />
 
         {loading ? (
@@ -139,7 +124,7 @@ const ProductionOrders: React.FC = () => {
         ) : data.length > 0 ? (
           <>
             <Row gutter={[20, 20]} className="mt-6 flex flex-wrap">
-              {data.map((record) => {
+              {data.map((record: IProductionOrder) => {
                 const isRunning = record.status === 1;
                 const statusText = isRunning ? 'Đang chạy' : 'Đang chờ';
                 const statusColor = isRunning ? 'orange' : '#1677ff';
@@ -153,7 +138,7 @@ const ProductionOrders: React.FC = () => {
                       statusColor={statusColor}
                       statusIcon={statusIcon}
                       productCode={record.productCode}
-                      productName={record.productName}
+                      productName={record.productName || (record as any).ProductName || (record as any).itemName || (record as any).ItemName || (record as any).productDescription || (record as any).ProductDescription}
                       subInfo={`${record.quantity} ${record.unitOfMeasurement}`}
                       currentBatch={Number(record.currentBatch)}
                       totalBatch={Number(record.totalBatches)}
@@ -200,16 +185,16 @@ const ProductionOrders: React.FC = () => {
       </Card>
 
       <Modal
-        title={<span className="text-[18px] font-bold">Chi tiết Lệnh Sản Xuất</span>}
+        title="Chi tiết Lệnh Sản Xuất"
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        width={750}
+        width={isMobile ? '100%' : isTablet ? 600 : 750}
         hideFooter
       >
         {selectedOrder && (
           <div className="px-2 py-4">
             <Row gutter={[32, 0]}>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 {infoItem('Mã Lệnh SX', selectedOrder.productionOrderNumber)}
                 {infoItem('Dây Chuyền', selectedOrder.productionLine)}
                 {infoItem('Phiên bản công thức', selectedOrder.recipeVersion)}
@@ -219,7 +204,7 @@ const ProductionOrders: React.FC = () => {
                 {infoItem('Plant', selectedOrder.plant)}
                 {infoItem('Shop Floor', selectedOrder.shopfloor || 'WP2')}
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={12}>
                 {infoItem('Mã Sản Phẩm', `${selectedOrder.productCode} - ${selectedOrder.productName}`)}
                 {infoItem('Công thức', `${selectedOrder.recipeCode} - ${selectedOrder.recipeName}`)}
                 {infoItem('Lô SX', selectedOrder.lotNumber)}

@@ -1,13 +1,14 @@
 import React from 'react';
 import { Drawer as AntdDrawer } from 'antd';
 import type { DrawerProps } from 'antd';
+import { useResponsive } from '../hooks/useResponsive';
 
 export interface ICommonDrawerProps extends Omit<DrawerProps, 'open' | 'onClose' | 'title'> {
   title: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  width?: number | string;
+  size?: 'default' | 'large';
 }
 
 export const CommonDrawer: React.FC<ICommonDrawerProps> = ({
@@ -15,15 +16,17 @@ export const CommonDrawer: React.FC<ICommonDrawerProps> = ({
   isOpen,
   onClose,
   children,
-  width = 920,
+  size = 'large',
   ...props
 }) => {
+  const { isMobile } = useResponsive();
   return (
     <AntdDrawer
       title={<div className="text-base font-semibold text-gray-800">{title}</div>}
       open={isOpen}
       onClose={onClose}
-      width={width}
+      size={size}
+      width={isMobile ? '100%' : undefined}
       destroyOnClose
       {...props}
     >

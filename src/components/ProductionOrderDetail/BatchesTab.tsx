@@ -1,7 +1,6 @@
-import React from 'react';
-import { Tag, Tooltip, Button } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import { Button, Tag, Tooltip } from 'antd';
+import React from 'react';
 import type { IBatch } from '../../types/productionOrderTypes';
 import Table from '../Table';
 
@@ -57,9 +56,9 @@ const BatchesTab: React.FC<BatchesTabProps> = ({ batches, loading, onViewMateria
       width: 100,
       render: (_: any, record: IBatch) => (
         <Tooltip title="Xem chi tiết tiêu thụ">
-          <Button 
-            type="text" 
-            icon={<EyeOutlined className="text-[#5b4ce8]" />} 
+          <Button
+            type="text"
+            icon={<EyeOutlined className="text-[#5b4ce8]" />}
             onClick={() => onViewMaterials?.(record.batchNumber)}
           />
         </Tooltip>

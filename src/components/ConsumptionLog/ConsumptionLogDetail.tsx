@@ -87,7 +87,7 @@ const ConsumptionLogDetail: React.FC<Props> = ({ selectedRecord }) => {
         <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
           <div>
             <div className="text-gray-500 text-xs mb-1">Kết quả gửi (Response)</div>
-            {renderStatus(selectedRecord.response, 'response')}
+            {renderStatus(selectedRecord.response || selectedRecord.respone, 'response')}
           </div>
           <div>
             <div className="text-gray-500 text-xs mb-1">Truyền tin (Status1)</div>
@@ -125,15 +125,15 @@ const ConsumptionLogDetail: React.FC<Props> = ({ selectedRecord }) => {
           </pre>
         </div>
 
-        {selectedRecord.response?.toLowerCase() !== 'success' && (
+        {((selectedRecord.response || selectedRecord.respone)?.toLowerCase() !== 'success') && (
           <div>
             <div className="flex justify-between items-center mb-1">
               <Text type="secondary" style={{ fontSize: '12px' }}>Phản hồi chi tiết (Response)</Text>
-              <Button size="small" type="text" icon={<CopyOutlined />} onClick={() => copyToClipboard(selectedRecord.response || '')}>Copy</Button>
+              <Button size="small" type="text" icon={<CopyOutlined />} onClick={() => copyToClipboard(selectedRecord.response || selectedRecord.respone || '')}>Copy</Button>
             </div>
             <pre className="bg-gray-50 text-gray-800 p-4 rounded border border-gray-200 text-xs overflow-auto max-h-60 font-mono">
               {(() => {
-                const fullContent = selectedRecord.response || '-';
+                const fullContent = selectedRecord.response || selectedRecord.respone || '-';
                 try {
                   const jsonPart = fullContent.includes('Body:') ? fullContent.split('Body:')[1] : fullContent;
                   return JSON.stringify(JSON.parse(jsonPart), null, 2);

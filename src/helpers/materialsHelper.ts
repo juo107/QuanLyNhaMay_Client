@@ -121,10 +121,17 @@ export const groupMaterialsLogic = (
         .filter((l: string) => l !== "")
     )).sort();
 
-    if (uniqueLots.length > 0) {
-      group.lot = uniqueLots.join(", ");
-    } else {
+    // KIỂM TRA: Nếu có bất kỳ dòng nào (kể cả thực tế lẫn kế hoạch) mà KHÔNG CÓ LOT
+    // Các trường hợp không có lot: rỗng, khoảng trắng, "-", "null", "undefined"
+    const hasItemWithoutLot = group.items.some((it: any) => {
+      const lotStr = (it.lot || "").toString().trim().toLowerCase();
+      return lotStr === "" || lotStr === "-" || lotStr === "null" || lotStr === "undefined";
+    });
+
+    if (hasItemWithoutLot || uniqueLots.length === 0) {
       group.lot = "-";
+    } else {
+      group.lot = uniqueLots.join(", ");
     }
     
     // Cập nhật lại response cho nhóm sau khi sắp xếp

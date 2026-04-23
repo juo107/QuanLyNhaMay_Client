@@ -1,7 +1,6 @@
-import React from 'react';
-import { Button, Tooltip } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
-import type { IIngredient, IProduct, IByProduct } from '../../types/recipeTypes';
+import { Button, Tooltip } from 'antd';
+import type { IByProduct, IIngredient, IProduct } from '../../types/recipeTypes';
 
 export const getIngredientColumns = (openProductModal: (code: string) => void) => [
   { title: 'Process', dataIndex: 'processId', key: 'processId', width: 90 },
@@ -11,6 +10,7 @@ export const getIngredientColumns = (openProductModal: (code: string) => void) =
     title: 'Tên',
     dataIndex: 'itemName',
     key: 'itemName',
+    width: 300,
     render: (value: string) => <div style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>{value || '-'}</div>,
   },
   { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity', width: 110 },
@@ -21,7 +21,7 @@ export const getIngredientColumns = (openProductModal: (code: string) => void) =
     width: 100,
     render: (_: unknown, record: IIngredient) => (
       <Tooltip title="Xem chi tiết sản phẩm">
-        <Button 
+        <Button
           type="text"
           icon={<EyeOutlined style={{ color: '#5b4ce8', fontSize: '18px' }} />}
           onClick={() => openProductModal(record.ingredientCode)}
@@ -39,6 +39,7 @@ export const getProductColumns = (openProductModal: (code: string) => void) => [
     title: 'Tên',
     dataIndex: 'itemName',
     key: 'itemName',
+    width: 300,
     render: (value: string) => <div style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>{value || '-'}</div>,
   },
   { title: 'Plan Qty', dataIndex: 'planQuantity', key: 'planQuantity', width: 110 },
@@ -49,7 +50,7 @@ export const getProductColumns = (openProductModal: (code: string) => void) => [
     width: 100,
     render: (_: any, record: IProduct) => (
       <Tooltip title="Xem chi tiết sản phẩm">
-        <Button 
+        <Button
           type="text"
           icon={<EyeOutlined style={{ color: '#5b4ce8', fontSize: '18px' }} />}
           onClick={() => openProductModal(record.productCode)}
@@ -66,6 +67,7 @@ export const getByProductColumns = (openProductModal: (code: string) => void) =>
     title: 'ByProduct Name',
     dataIndex: 'byProductName',
     key: 'byProductName',
+    width: 300,
     render: (value: string) => <div style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>{value || '-'}</div>,
   },
   {
@@ -74,12 +76,25 @@ export const getByProductColumns = (openProductModal: (code: string) => void) =>
     width: 100,
     render: (_: any, record: IByProduct) => (
       <Tooltip title="Xem chi tiết phụ phẩm">
-        <Button 
+        <Button
           type="text"
           icon={<EyeOutlined style={{ color: '#5b4ce8', fontSize: '18px' }} />}
           onClick={() => openProductModal(record.byProductCode)}
         />
       </Tooltip>
     ),
+  },
+];
+
+export const getParameterColumns = () => [
+  { title: 'Process', dataIndex: 'processId', key: 'processId', width: 100 },
+  { title: 'Mã', dataIndex: 'code', key: 'code', width: 150 },
+  { title: 'Tên thông số', dataIndex: 'parameterName', key: 'parameterName', width: 250 },
+  {
+    title: 'Giá trị',
+    dataIndex: 'value',
+    key: 'value',
+    width: 150,
+    render: (val: any) => <span className="font-medium text-blue-600">{val}</span>
   },
 ];

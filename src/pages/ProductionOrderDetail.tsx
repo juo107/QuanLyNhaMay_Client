@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Card, Descriptions, Tag, Button, Tabs, Spin, Typography, Breadcrumb } from 'antd';
 import { ArrowLeftOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -7,18 +7,21 @@ import BatchesTab from '../components/ProductionOrderDetail/BatchesTab';
 import MaterialsTab from '../components/ProductionOrderDetail/MaterialsTab';
 import { formatUnit } from '../utils/format';
 import { useProductionOrderDetail } from '../hooks/useProductionOrderDetail';
+import { useResponsive } from '../hooks/useResponsive';
 
 const { Title, Text, Link } = Typography;
 const { Item } = Descriptions;
 
 const ProductionOrderDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { isMobile, isTablet } = useResponsive();
+  const { id } = useParams({ from: '/production-status/$id' });
   const navigate = useNavigate();
-  const location = useLocation();
-  const isFromStatus = location.pathname.startsWith('/production-status');
+  const routerState = useRouterState();
+  const isFromStatus = routerState.location.pathname.startsWith('/production-status');
 
   const {
     loading,
+    batchLoading,
     order,
     batches,
     activeTab,
@@ -29,10 +32,10 @@ const ProductionOrderDetail: React.FC = () => {
     setBatchFilter,
   } = useProductionOrderDetail(id);
 
-  if (loading) {
+  if (loading && !order) {
     return (
       <div className="flex justify-center items-center h-full min-h-[400px]">
-        <Spin size="large" />
+        <Spin size="large" description="Đang tải thông tin lệnh..." />
       </div>
     );
   }
@@ -41,7 +44,7 @@ const ProductionOrderDetail: React.FC = () => {
     return (
       <div className="text-center mt-10">
         <Typography.Title level={4} type="danger">Không tìm thấy Lệnh Sản Xuất</Typography.Title>
-        <Button onClick={() => navigate(-1)}>Quay lại</Button>
+        <Button onClick={() => navigate({ to: '..' })}>Quay lại</Button>
       </div>
     );
   }
@@ -51,153 +54,150 @@ const ProductionOrderDetail: React.FC = () => {
       <Breadcrumb
         items={[
           { title: 'Trang chủ', href: '/' },
-          { 
-            title: isFromStatus ? 'Trạng thái sản xuất' : 'Lệnh sản xuất', 
-            href: isFromStatus ? '/production-status' : '/production-orders' 
+          {
+            title: isFromStatus ? 'Trạng thái sản xuất' : 'Lệnh sản xuất',
+            href: isFromStatus ? '/production-status' : '/production-orders'
           },
           { title: `Chi tiết ${isFromStatus ? 'Trạng thái' : 'Lệnh sản xuất'} - ${id}` },
         ]}
       />
-      <div className="space-y-6">
-        <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-          <div className="flex items-center gap-4">
-            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)} />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300">
+        {/* Main Header Row */}
+        <div className="p-6 border-b border-gray-50 flex flex-wrap justify-between items-start gap-4 bg-gradient-to-r from-white to-gray-50/30">
+          <div className="flex items-start gap-4">
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate({ to: '..' })}
+              className="mt-1 shadow-sm border-gray-100 hover:text-[#5b4ce8] hover:border-[#5b4ce8]"
+            />
             <div>
-              <Title level={4} className="!mb-0 text-[#5b4ce8]">
-                {order.productionOrderNumber || '-'}
-              </Title>
+              <div className="flex items-center gap-3 mb-1">
+                <Title level={3} className="!mb-0 text-[#5b4ce8] tracking-tight">
+                  {order.productionOrderNumber || '-'}
+                </Title>
+                <div className="flex items-center gap-2">
+                  {order.status === 1 && <Tag color="blue" className="rounded-full px-3 py-0.5 m-0 border-none bg-blue-50 text-blue-600 font-medium">Đang chạy</Tag>}
+                  {order.status === -1 && <Tag color="error" className="rounded-full px-3 py-0.5 m-0 border-none bg-red-50 text-red-600 font-medium">Đã hủy</Tag>}
+                  {order.status === 2 && <Tag color="success" className="rounded-full px-3 py-0.5 m-0 border-none bg-green-50 text-green-600 font-medium">Hoàn thành</Tag>}
+                </div>
+              </div>
               <div className="flex flex-col">
-                <Text className="text-gray-800">
-                  {order.productCode} - {order.productName}
-                </Text>
-                <Text className="text-gray-600" style={{ fontSize: '12px' }}>
-                  Chi Tiết {isFromStatus ? 'Trạng Thái Sản Xuất' : 'Lệnh Sản Xuất'}
+                <div className="flex items-center gap-2">
+                  <Text className="text-[16px] font-bold text-gray-800">
+                    {order.productCode}
+                  </Text>
+                  <Text className="text-[16px] text-gray-600 font-medium">
+                    - {order.productName}
+                  </Text>
+                </div>
+                <Text className="text-gray-400 font-medium" style={{ fontSize: '12px' }}>
+                  Hệ thống Quản lý Sản xuất & Trạng thái Chi tiết
                 </Text>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end mr-2">
-              <Text className="text-gray-600 uppercase tracking-tight" style={{ fontSize: '11px' }}>Tiến độ lô</Text>
-              <Text style={{ fontSize: '16px', color: '#5b4ce8' }}>
-                {order.currentBatch || 0} / {order.totalBatches || 0}
+
+          <div className="flex items-center gap-6 bg-white p-3 rounded-xl border border-gray-50 shadow-inner">
+            <div className="flex flex-col items-center px-4">
+              <Text className="text-gray-400 uppercase font-bold tracking-widest mb-1" style={{ fontSize: '10px' }}>Sản lượng</Text>
+              <Text className="font-bold text-gray-800" style={{ fontSize: '18px' }}>
+                {order.quantity || 0} <span className="text-gray-400 text-xs font-normal ml-1">{formatUnit(order.unitOfMeasurement)}</span>
               </Text>
             </div>
-            <div className="h-8 w-[1px] bg-gray-200 mx-1"></div>
-            <div className="flex items-center gap-2">
-              {order.status === 1 && <Tag color="blue" className="rounded-full px-4 py-1 m-0">Đang chạy</Tag>}
-              {order.status === -1 && <Tag color="error" className="rounded-full px-4 py-1 m-0">Đã hủy</Tag>}
-              {order.status === 2 && <Tag color="success" className="rounded-full px-4 py-1 m-0">Hoàn thành</Tag>}
-            </div>
+            <Button
+              type="text"
+              icon={isHeaderExpanded ? <UpOutlined /> : <DownOutlined />}
+              onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
+              className="text-gray-400 hover:text-[#5b4ce8] hover:bg-blue-50 h-10 w-10 rounded-lg"
+            />
           </div>
         </div>
 
-        <Card 
-          bordered={false} 
-          className="shadow-sm overflow-hidden border border-gray-100"
-          title={<span className="text-base font-bold text-[#5b4ce8]">Thông tin chung</span>}
-          extra={
-            <Button 
-              type="text" 
-              icon={isHeaderExpanded ? <UpOutlined /> : <DownOutlined />} 
-              onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
-              className="text-[#5b4ce8] hover:bg-blue-50"
-            />
-          }
-        >
-          <Descriptions 
-            bordered={false}
-            layout="vertical"
-            column={isHeaderExpanded ? { xxl: 4, xl: 3, lg: 3, md: 2, sm: 1, xs: 1 } : { xxl: 3, xl: 3, lg: 3, md: 3, sm: 1, xs: 1 }} 
-            size="small"
-            labelStyle={{ 
-              fontWeight: 'bold', 
-              color: '#374151',
-              fontSize: '14px',
-              marginBottom: '4px'
-            }}
-            contentStyle={{
-              fontSize: '15px',
-              color: '#111827',
-              paddingBottom: '16px',
-              fontWeight: 'normal'
-            }}
-          >
-            <Item label="Mã lệnh">
-              <span className="text-gray-800">{order.productionOrderNumber || '-'}</span>
-            </Item>
-            <Item label="Sản Phẩm">
-              <span className="text-gray-800">{order.productCode}</span>
-              <span className="ml-2 text-gray-800">{order.productName}</span>
-            </Item>
-            <Item label="Ca Làm Việc">
-              <Tag color="cyan" className="m-0 px-3 border-none font-medium bg-cyan-50 text-cyan-600">
-                {order.shift || '-'}
-              </Tag>
-            </Item>
-            
-            {isHeaderExpanded && (
-              <>
-                <Item label="Dây Chuyền">{order.productionLine || '-'}</Item>
-                <Item label="Công Thức (Recipe)">
-                  <div className="flex flex-col">
-                    <Link 
-                      className="!p-0 !m-0 h-auto text-[#5b4ce8] text-[15px] hover:underline"
-                      onClick={() => order.recipeDetailsId && navigate(`/recipes/${order.recipeDetailsId}`)}
-                    >
-                      {order.recipeCode}
-                    </Link>
-                    <Text className="text-gray-600" style={{ fontSize: '12px' }}>{order.recipeName}</Text>
-                  </div>
-                </Item>
-                <Item label="Phiên Bản">{order.recipeVersion || '7.00'}</Item>
-                <Item label="Mã Lô (LotNumber)">{order.lotNumber || '-'}</Item>
-                <Item label="Sản Lượng (Planned Quantity)">
-                  <Text>{order.quantity || 0} {formatUnit(order.unitOfMeasurement)}</Text>
-                </Item>
-                <Item label="TG Bắt Đầu Dự Kiến">
-                  <span className="text-[15px] text-gray-800">{order.plannedStart ? dayjs(order.plannedStart).format('DD/MM/YYYY HH:mm') : '-'}</span>
-                </Item>
-                <Item label="TG Kết Thúc Dự Kiến">
-                  <span className="text-[15px] text-gray-800">{order.plannedEnd ? dayjs(order.plannedEnd).format('DD/MM/YYYY HH:mm') : '-'}</span>
-                </Item>
-                <Item label="Khu Vực">{order.processArea || '-'}</Item>
-              </>
-            )}
-          </Descriptions>
-        </Card>
+        {/* Expandable Info Grid */}
+        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isHeaderExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className="p-6 bg-gray-50/30 overflow-x-auto">
+            <Descriptions 
+              bordered 
+              column={isMobile ? 1 : isTablet ? 2 : 3} 
+              size="middle" 
+              className={`bg-white rounded-lg shadow-sm ${isMobile ? 'w-full' : 'min-w-[800px]'}`}
+              styles={{ label: { fontWeight: 'bold', color: '#6b7280', width: '140px' }, content: { color: '#374151', fontWeight: '500' } }}
+            >
+              {/* Hàng 1 */}
+              <Item label="Ca Làm Việc">
+                <Tag className="m-0 font-bold bg-gray-100 text-gray-700 border-none px-3 py-0.5">{order.shift || '-'}</Tag>
+              </Item>
+              <Item label="Dây Chuyền">{order.productionLine || '-'}</Item>
+              <Item label="Khu Vực">{order.processArea || '-'}</Item>
 
-        <Card bordered={false} className="shadow-sm" bodyStyle={{ paddingTop: 0 }}>
-          <Tabs 
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={[
-              {
-                key: 'batches',
-                label: 'Lô Sản Xuất (Batches)',
-                children: <BatchesTab 
-                  batches={batches} 
-                  loading={loading} 
+              {/* Hàng 2 */}
+              <Item label="Mã Lô (Lot)">{order.lotNumber || '-'}</Item>
+              <Item label="Mã Công Thức">
+                <Link
+                  className="!text-[#5b4ce8] font-bold hover:underline"
+                  onClick={() => order.recipeDetailsId && navigate({ to: '/recipes/$id', params: { id: String(order.recipeDetailsId) } })}
+                >
+                  {order.recipeCode || '-'}
+                </Link>
+              </Item>
+              <Item label="Phiên Bản">
+                <Link
+                  className="!text-blue-500 font-bold hover:underline"
+                  onClick={() => order.recipeDetailsId && navigate({ to: '/recipes/$id', params: { id: String(order.recipeDetailsId) } })}
+                >
+                  v{order.recipeVersion || '7.00'}
+                </Link>
+              </Item>
+
+              {/* Hàng 3 */}
+              <Item label="Tên Công Thức">{order.recipeName || '-'}</Item>
+              <Item label="TG Bắt Đầu">
+                <span className="text-gray-700">{order.plannedStart ? dayjs(order.plannedStart).format('DD/MM/YYYY HH:mm') : '-'}</span>
+              </Item>
+              <Item label="TG Kết Thúc">
+                <span className="text-gray-700">{order.plannedEnd ? dayjs(order.plannedEnd).format('DD/MM/YYYY HH:mm') : '-'}</span>
+              </Item>
+            </Descriptions>
+          </div>
+        </div>
+      </div>
+
+      <Card variant="borderless" className="shadow-sm" styles={{ body: { paddingTop: 0 } }}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={(key) => setActiveTab(key)}
+          destroyOnHidden={true}
+          items={[
+            {
+              key: 'batches',
+              label: 'Lô Sản Xuất (Batches)',
+              children: activeTab === 'batches' ? (
+                <BatchesTab
+                  batches={batches}
+                  loading={batchLoading}
                   onViewMaterials={(batchCode) => {
                     setBatchFilter(batchCode || "");
                     setActiveTab('materials');
                   }}
                 />
-              },
-              {
-                key: 'materials',
-                label: 'Tiêu Hao Vật Liệu (Materials)',
-                children: <MaterialsTab 
-                  order={order} 
-                  batches={batches} 
+              ) : null
+            },
+            {
+              key: 'materials',
+              label: 'Tiêu Hao Vật Liệu (Materials)',
+              children: activeTab === 'materials' ? (
+                <MaterialsTab
+                  order={order}
+                  batches={batches}
                   batchFilter={batchFilter}
                   onClearFilter={() => setBatchFilter(null)}
+                  onChangeBatchFilter={(code) => setBatchFilter(code)}
                 />
-              }
-            ]} 
-          />
-        </Card>
-      </div>
+              ) : null
+            }
+          ]}
+        />
+      </Card>
     </div>
   );
 };

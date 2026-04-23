@@ -1,10 +1,10 @@
-import React from 'react';
-import { Input, Button, DatePicker, Select } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
-import CheckboxSelect from './CheckboxSelect';
+import { ReloadOutlined } from '@ant-design/icons';
+import { Button, DatePicker, Input, Select } from 'antd';
 import dayjs from 'dayjs';
+import React from 'react';
+import { useResponsive } from '../hooks/useResponsive';
+import CheckboxSelect from './CheckboxSelect';
 
-const { Search } = Input;
 const { RangePicker } = DatePicker;
 
 interface IOption {
@@ -41,7 +41,18 @@ interface IDateRangeFilter {
   placeholder?: [string, string];
 }
 
-export type FilterItem = ISearchFilter | ICheckboxSelectFilter | ISelectFilter | IDateRangeFilter;
+interface IAutoCompleteFilter {
+  type: 'autocomplete';
+  key: string;
+  table: string;
+  column: string;
+  placeholder?: string;
+  width?: number;
+}
+
+export type FilterItem = ISearchFilter | ICheckboxSelectFilter | ISelectFilter | IDateRangeFilter | IAutoCompleteFilter;
+
+import CommonAutoComplete from './CommonAutoComplete';
 
 interface IFilterSearchBarProps {
   filters: FilterItem[];
@@ -58,6 +69,7 @@ export const FilterSearchBar: React.FC<IFilterSearchBarProps> = ({
   onRefresh,
   extraActions,
 }) => {
+  const { isMobile } = useResponsive();
   const renderFilter = (filter: FilterItem, index: number) => {
     switch (filter.type) {
       case 'search':
@@ -67,29 +79,38 @@ export const FilterSearchBar: React.FC<IFilterSearchBarProps> = ({
             placeholder={filter.placeholder || 'Tìm kiếm...'}
             onPressEnter={(e) => onChange(filter.key, (e.target as HTMLInputElement).value)}
             onBlur={(e) => onChange(filter.key, e.target.value)}
-            style={{ width: filter.width || 260 }}
+            onChange={(e) => {
+              if (!e.target.value) onChange(filter.key, undefined);
+            }}
+            style={{ width: isMobile ? '100%' : (filter.width || 260) }}
             allowClear
           />
         );
 
-      case 'checkboxSelect':
+      case 'checkboxSelect': {
+        const rawValue = values[filter.key];
+        const arrayValue = Array.isArray(rawValue)
+          ? rawValue
+          : (typeof rawValue === 'string' && rawValue ? rawValue.split(',') : []);
+
         return (
           <CheckboxSelect
             key={index}
             placeholder={filter.placeholder}
-            style={{ minWidth: filter.minWidth || 180 }}
-            value={values[filter.key] ? values[filter.key].split(',') : []}
-            onChange={(selected: string[]) => onChange(filter.key, selected.join(','))}
+            style={{ width: isMobile ? '100%' : (filter.minWidth || 180), minWidth: isMobile ? '100%' : (filter.minWidth || 180) }}
+            value={arrayValue}
+            onChange={(selected: string[]) => onChange(filter.key, selected)}
             options={filter.options}
           />
         );
+      }
 
       case 'select':
         return (
           <Select
             key={index}
             placeholder={filter.placeholder}
-            style={{ width: filter.width || 180 }}
+            style={{ width: isMobile ? '100%' : (filter.width || 180) }}
             value={values[filter.key] || undefined}
             onChange={(val) => onChange(filter.key, val)}
             allowClear
@@ -97,12 +118,35 @@ export const FilterSearchBar: React.FC<IFilterSearchBarProps> = ({
           />
         );
 
-      case 'dateRange':
+      case 'dateRange': {
+        const startValue = values[filter.key[0]] ? dayjs(values[filter.key[0]]) : null;
+        const endValue = values[filter.key[1]] ? dayjs(values[filter.key[1]]) : null;
+
+        if (isMobile) {
+          return (
+            <div key={index} className="flex flex-col gap-2 w-full">
+              <DatePicker
+                placeholder={filter.placeholder?.[0] || 'Từ ngày'}
+                value={startValue}
+                onChange={(_, dateString) => onChange(filter.key[0], dateString)}
+                className="w-full"
+              />
+              <DatePicker
+                placeholder={filter.placeholder?.[1] || 'Đến ngày'}
+                value={endValue}
+                onChange={(_, dateString) => onChange(filter.key[1], dateString)}
+                className="w-full"
+              />
+            </div>
+          );
+        }
+
         return (
           <RangePicker
             key={index}
+            style={{ width: isMobile ? '100%' : 'auto' }}
             placeholder={filter.placeholder || ['Từ ngày', 'Đến ngày']}
-            value={values[filter.key[0]] && values[filter.key[1]] ? [dayjs(values[filter.key[0]]), dayjs(values[filter.key[1]])] : null}
+            value={startValue && endValue ? [startValue, endValue] : null}
             onChange={(_: any, dateStrings: [string, string] | null) => {
               onChange(filter.key[0], dateStrings ? dateStrings[0] : '');
               onChange(filter.key[1], dateStrings ? dateStrings[1] : '');
@@ -115,6 +159,20 @@ export const FilterSearchBar: React.FC<IFilterSearchBarProps> = ({
             ]}
           />
         );
+      }
+
+      case 'autocomplete':
+        return (
+          <div key={index} style={{ width: isMobile ? '100%' : (filter.width || 200) }}>
+            <CommonAutoComplete
+              table={filter.table}
+              column={filter.column}
+              placeholder={filter.placeholder}
+              value={values[filter.key] || ''}
+              onChange={(val) => onChange(filter.key, val)}
+            />
+          </div>
+        );
 
       default:
         return null;
@@ -122,13 +180,13 @@ export const FilterSearchBar: React.FC<IFilterSearchBarProps> = ({
   };
 
   return (
-    <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
-      <div className="flex gap-3 items-center flex-wrap">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full sm:w-auto">
         {filters.map((filter, index) => renderFilter(filter, index))}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 w-full sm:w-auto justify-end">
         {onRefresh && (
-          <Button icon={<ReloadOutlined />} onClick={onRefresh}>Làm mới</Button>
+          <Button icon={<ReloadOutlined />} onClick={onRefresh} className={isMobile ? "flex-1" : ""}>Làm mới</Button>
         )}
         {extraActions}
       </div>

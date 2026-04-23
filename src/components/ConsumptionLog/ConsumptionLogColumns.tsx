@@ -44,10 +44,15 @@ export const getConsumptionLogColumns = (showDetail: (record: IConsumptionRecord
     dataIndex: 'ingredientCode',
     key: 'ingredientCode',
     width: 200,
-    render: (text: string) => (
-      <Tooltip title={text}>
-        <Text className="block truncate max-w-[180px]">{text}</Text>
-      </Tooltip>
+    render: (text: string, record: IConsumptionRecord) => (
+      <div className="py-1 whitespace-normal break-words min-w-[200px]">
+        <span className="text-gray-800 text-[13px] font-medium">{text}</span>
+        {record.ingredientName && (
+          <span className="text-gray-600 text-[12px] font-medium ml-1">
+            - {record.ingredientName}
+          </span>
+        )}
+      </div>
     ),
   },
   {
@@ -66,18 +71,17 @@ export const getConsumptionLogColumns = (showDetail: (record: IConsumptionRecord
   },
   {
     title: 'Người Vận Hành',
-    dataIndex: 'operatorId',
     key: 'operatorId',
     width: 120,
-    render: (text: string) => text || '-',
+    render: (_: any, record: IConsumptionRecord) => record.operatorId || record.operator_ID || '-',
   },
   {
     title: 'Kết Quả',
-    dataIndex: 'response',
     key: 'response',
     align: 'center' as const,
     width: 120,
-    render: (val: string) => {
+    render: (_: any, record: IConsumptionRecord) => {
+      const val = record.response || record.respone;
       const isSuccess = val?.toLowerCase().includes('success');
       return (
         <Tag icon={isSuccess ? <CheckCircleOutlined /> : <CloseCircleOutlined />} color={isSuccess ? 'success' : 'error'}>

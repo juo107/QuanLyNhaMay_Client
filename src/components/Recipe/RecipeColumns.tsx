@@ -1,6 +1,5 @@
-import React from 'react';
-import { Tag, Typography, Tooltip, Button } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
+import { Button, Tag, Tooltip, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { formatVersionDisplay } from '../../helpers/recipeHelper';
 import type { IRecipe } from '../../types/recipeTypes';
@@ -10,10 +9,12 @@ const { Text } = Typography;
 
 export const getRecipeFilters = (): FilterItem[] => [
   {
-    type: 'search',
+    type: 'autocomplete',
     key: 'search',
-    placeholder: 'Tìm mã công thức, tên sản phẩm...',
-    width: 300,
+    table: 'RecipeDetails',
+    column: 'RecipeCode,RecipeName',
+    placeholder: 'Tìm mã công thức, tên...',
+    width: 250,
   },
   {
     type: 'checkboxSelect',
@@ -34,7 +35,7 @@ export const getRecipeColumns = (openDetailDrawer: (record: IRecipe) => void) =>
     key: 'recipeDetailsId',
     width: 100,
     align: 'center' as const,
-    render: (id: any, record: any) => 
+    render: (id: any, record: any) =>
       record.isGroup ? <Tag color="purple">{record.versionsCount} items</Tag> : id,
   },
   {

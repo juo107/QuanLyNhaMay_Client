@@ -23,11 +23,11 @@ export interface IProduct {
 export interface IProductSearchParams {
   q?: string;
   status?: string;
-  statuses?: string;
+  statuses?: string[];
   type?: string;
-  types?: string;
-  page?: number;
-  pageSize?: number;
+  types?: string[];
+  page: number;
+  pageSize: number;
 }
 
 export interface IProductStats {

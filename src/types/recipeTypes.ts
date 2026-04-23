@@ -13,11 +13,10 @@ export interface IRecipe {
 }
 
 export interface IRecipeSearchParams {
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
   search?: string;
-  statuses?: string;
-  status?: string;
+  statuses?: string[];
 }
 
 export interface IProcess {

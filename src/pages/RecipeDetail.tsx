@@ -1,27 +1,27 @@
-import React, { useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Statistic, Button, Tag, Typography, Descriptions, Spin, Alert, Empty, Table, Tabs } from 'antd';
 import {
   ArrowLeftOutlined,
-  ProfileOutlined,
-  ExperimentOutlined,
-  BranchesOutlined,
   EyeOutlined
 } from '@ant-design/icons';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import { Alert, Breadcrumb, Button, Card, Col, Descriptions, Empty, Row, Spin, Tabs, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
+import React, { useMemo } from 'react';
 import Modal from '../components/Modal';
+import {
+  getByProductColumns,
+  getIngredientColumns,
+  getParameterColumns
+} from '../components/RecipeDetail/RecipeDetailColumns';
+import { useResponsive } from '../hooks/useResponsive';
 import { formatVersionDisplay } from '../helpers/recipeHelper';
 import { useRecipeDetail } from '../hooks/useRecipeDetail';
-import {
-  getIngredientColumns,
-  getProductColumns,
-  getByProductColumns
-} from '../components/RecipeDetail/RecipeDetailColumns';
+import Table from '../components/Table';
 
 const { Text } = Typography;
 
 const RecipeDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { isMobile, isTablet } = useResponsive();
+  const { id } = useParams({ from: '/recipes/$id' });
   const navigate = useNavigate();
 
   const {
@@ -34,25 +34,30 @@ const RecipeDetail: React.FC = () => {
     productLoading,
     openProductModal,
     filteredIngredients,
-    filteredProducts,
-    filteredByProducts
+    filteredByProducts,
+    filteredParameters
   } = useRecipeDetail(id);
 
   const backToRecipes = () => {
-    navigate('/recipes', {
+    navigate({
+      to: '/recipes',
+      search: {
+        page: 1,
+        limit: 20
+      },
       state: {
         reopenDrawer: true,
         selectedRecipe: data?.recipe
-      }
+      } as any
     });
   };
 
   const ingredientColumns = useMemo(() => getIngredientColumns(openProductModal), [openProductModal]);
-  const productColumns = useMemo(() => getProductColumns(openProductModal), [openProductModal]);
   const byProductColumns = useMemo(() => getByProductColumns(openProductModal), [openProductModal]);
+  const parameterColumns = useMemo(() => getParameterColumns(), []);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <Breadcrumb
         items={[
           { title: 'Tổng quan' },
@@ -61,12 +66,18 @@ const RecipeDetail: React.FC = () => {
         ]}
       />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold">Recipe Detail</h2>
-          <p className="text-gray-500">Chi tiết công thức và thành phần sản xuất</p>
+          <p className="text-gray-500 text-sm">Chi tiết công thức và thành phần sản xuất</p>
         </div>
-        <Button icon={<ArrowLeftOutlined />} onClick={backToRecipes}>Quay lại</Button>
+        <Button 
+          icon={<ArrowLeftOutlined />} 
+          onClick={backToRecipes}
+          className={isMobile ? "w-full" : ""}
+        >
+          Quay lại
+        </Button>
       </div>
 
       {loading ? (
@@ -77,45 +88,42 @@ const RecipeDetail: React.FC = () => {
         <Empty description="Không có dữ liệu công thức" />
       ) : (
         <>
-          <Row gutter={16}>
-            <Col span={8}>
-              <Card bordered={false}>
-                <Statistic title={<Text strong>Mã công thức</Text>} value={data.recipe.recipeCode || '-'} prefix={<ProfileOutlined />} />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card bordered={false}>
-                <Statistic title={<Text strong>Phiên bản</Text>} value={formatVersionDisplay(data.recipe.version)} prefix={<ExperimentOutlined />} />
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card bordered={false}>
-                <Statistic title={<Text strong>Số process</Text>} value={(data.processes || []).length} prefix={<BranchesOutlined />} />
-              </Card>
-            </Col>
-          </Row>
+          <Card title="Thông tin chung" variant="borderless" className="shadow-sm">
+            <div className="overflow-x-auto">
+              <Descriptions 
+                column={isMobile ? 1 : isTablet ? 2 : 3} 
+                bordered 
+                size="middle" 
+                layout={isMobile ? 'vertical' : 'horizontal'}
+                className="w-full"
+              >
+                {/* Hàng 1 */}
+                <Descriptions.Item label={<Text strong>Mã công thức</Text>}><div className="break-words">{data.recipe.recipeCode || '-'}</div></Descriptions.Item>
+                <Descriptions.Item label={<Text strong>Tên công thức</Text>}><div className="break-words">{data.recipe.recipeName || '-'}</div></Descriptions.Item>
+                <Descriptions.Item label={<Text strong>Phiên bản</Text>}>
+                  <Tag color="blue" className="font-bold m-0">{formatVersionDisplay(data.recipe.version)}</Tag>
+                </Descriptions.Item>
 
-          <Card title="Thông tin chung" bordered={false}>
-            <Descriptions column={3} bordered size="middle">
-              <Descriptions.Item label={<Text strong>Recipe ID</Text>}>{data.recipe.recipeDetailsId || '-'}</Descriptions.Item>
-              <Descriptions.Item label={<Text strong>Phiên bản hiện tại</Text>}>
-                <Tag color="blue">{formatVersionDisplay(data.recipe.version)}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label={<Text strong>Trạng thái</Text>}>
-                <Tag color={data.recipe.recipeStatus === 'Active' ? 'success' : 'default'}>
-                  {data.recipe.recipeStatus || '-'}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label={<Text strong>Cập nhật</Text>}>
-                {data.recipe.timestamp ? dayjs(data.recipe.timestamp).format('DD/MM/YYYY HH:mm:ss') : '-'}
-              </Descriptions.Item>
-              <Descriptions.Item label={<Text strong>Mã sản phẩm</Text>}>{data.recipe.productCode || '-'}</Descriptions.Item>
-              <Descriptions.Item label={<Text strong>Tên sản phẩm</Text>} span={2}>{data.recipe.productName || '-'}</Descriptions.Item>
-              <Descriptions.Item label={<Text strong>Tên công thức</Text>} span={3}>{data.recipe.recipeName || '-'}</Descriptions.Item>
-            </Descriptions>
+                {/* Hàng 2 */}
+                <Descriptions.Item label={<Text strong>Mã sản phẩm</Text>}><div className="break-words">{data.recipe.productCode || '-'}</div></Descriptions.Item>
+                <Descriptions.Item label={<Text strong>Tên sản phẩm</Text>}><div className="break-words">{data.recipe.productName || '-'}</div></Descriptions.Item>
+                <Descriptions.Item label={<Text strong>Trạng thái</Text>}>
+                  <Tag color={data.recipe.recipeStatus === 'Active' ? 'success' : 'default'} className="font-medium m-0">
+                    {data.recipe.recipeStatus || '-'}
+                  </Tag>
+                </Descriptions.Item>
+                
+                {/* Hàng 3 */}
+                <Descriptions.Item label={<Text strong>Recipe ID</Text>}>{data.recipe.recipeDetailsId || '-'}</Descriptions.Item>
+                <Descriptions.Item label={<Text strong>Số quy trình</Text>}>{(data.processes || []).length} bước</Descriptions.Item>
+                <Descriptions.Item label={<Text strong>Cập nhật</Text>}>
+                  {data.recipe.timestamp ? dayjs(data.recipe.timestamp).format('DD/MM/YYYY HH:mm:ss') : '-'}
+                </Descriptions.Item>
+              </Descriptions>
+            </div>
           </Card>
 
-          <Card title="Processes" bordered={false}>
+          <Card title="Processes" variant="borderless">
             <div className="mb-4">
               <Text type="secondary">Danh sách quy trình sản xuất ({data.processes.length} bước)</Text>
             </div>
@@ -124,7 +132,7 @@ const RecipeDetail: React.FC = () => {
                 const product = data.products.find(p => p.processId === process.processId) || data.products[idx];
 
                 return (
-                  <Col span={8} key={process.processId || `proc-${idx}`}>
+                  <Col xs={24} sm={12} lg={8} key={process.processId || `proc-${idx}`}>
                     <Card size="small" className="h-full" hoverable>
                       <div className="space-y-1.5">
                         <div><Text strong className="text-indigo-600" style={{ fontSize: '16px' }}>Process: {process.processId}</Text></div>
@@ -173,7 +181,7 @@ const RecipeDetail: React.FC = () => {
             </Row>
           </Card>
 
-          <Card bordered={false}>
+          <Card variant="borderless">
             <Tabs
               items={[
                 {
@@ -181,22 +189,11 @@ const RecipeDetail: React.FC = () => {
                   label: `Ingredients (${filteredIngredients.length})`,
                   children: (
                     <Table
-                      rowKey={(record, idx) => record.ingredientId || `ing-${idx}`}
+                      rowKey={(record, idx) => String(record.ingredientId || `ing-${idx}`)}
                       pagination={{ pageSize: 8 }}
-                      dataSource={filteredIngredients}
+                      data={filteredIngredients}
                       columns={ingredientColumns}
-                    />
-                  ),
-                },
-                {
-                  key: 'products',
-                  label: `Products (${filteredProducts.length})`,
-                  children: (
-                    <Table
-                      rowKey={(record, idx) => record.productId || `prod-${idx}`}
-                      pagination={{ pageSize: 8 }}
-                      dataSource={filteredProducts}
-                      columns={productColumns}
+                      scroll={{ x: 1000 }}
                     />
                   ),
                 },
@@ -205,10 +202,24 @@ const RecipeDetail: React.FC = () => {
                   label: `ByProducts (${filteredByProducts.length})`,
                   children: (
                     <Table
-                      rowKey={(record, idx) => record.byProductId || `byproc-${idx}`}
+                      rowKey={(record, idx) => String(record.byProductId || `byproc-${idx}`)}
                       pagination={{ pageSize: 8 }}
-                      dataSource={filteredByProducts}
+                      data={filteredByProducts}
                       columns={byProductColumns}
+                      scroll={{ x: 1000 }}
+                    />
+                  ),
+                },
+                {
+                  key: 'parameters',
+                  label: `Parameters (${filteredParameters.length})`,
+                  children: (
+                    <Table
+                      rowKey={(record, idx) => String(record.code || `param-${idx}`)}
+                      pagination={{ pageSize: 8 }}
+                      data={filteredParameters}
+                      columns={parameterColumns}
+                      scroll={{ x: 1000 }}
                     />
                   ),
                 },
@@ -218,7 +229,13 @@ const RecipeDetail: React.FC = () => {
         </>
       )}
 
-      <Modal title={<div className="text-lg font-bold text-gray-800 border-b pb-2 mb-0">Chi tiết sản phẩm</div>} isOpen={isProductModalOpen} onClose={() => setIsProductModalOpen(false)} width={800} hideFooter>
+      <Modal 
+        title="Chi tiết sản phẩm" 
+        isOpen={isProductModalOpen} 
+        onClose={() => setIsProductModalOpen(false)} 
+        width={isMobile ? '100%' : 800} 
+        hideFooter
+      >
         {productLoading ? (
           <div className="py-10 text-center"><Spin /></div>
         ) : selectedProduct ? (
@@ -241,7 +258,7 @@ const RecipeDetail: React.FC = () => {
                     : '-',
                 },
               ].map((item) => (
-                <div key={item.label} className="grid grid-cols-[150px_1fr] gap-2 text-sm">
+                <div key={item.label} className={`grid ${isMobile ? 'grid-cols-1 gap-0.5' : 'grid-cols-[150px_1fr] gap-2'} text-sm`}>
                   <span className="font-semibold text-gray-600">{item.label}:</span>
                   <span className="text-gray-800">{item.value || '-'}</span>
                 </div>
@@ -252,10 +269,10 @@ const RecipeDetail: React.FC = () => {
               <h4 className="text-base font-bold text-blue-600 mb-3">Quy đổi đơn vị (MHUTypes)</h4>
               <Table
                 rowKey="mhuTypeId"
-                dataSource={selectedProduct.mhuTypes || []}
+                data={selectedProduct.mhuTypes || []}
                 pagination={false}
                 size="small"
-                scroll={{ x: 'max-content' }}
+                scroll={{ x: 600 }}
                 columns={[
                   { title: 'MHUTypeId', dataIndex: 'mhuTypeId', key: 'mhuTypeId', width: 100 },
                   { title: 'Từ đơn vị', dataIndex: 'fromUnit', key: 'fromUnit', width: 120 },
@@ -277,16 +294,6 @@ const RecipeDetail: React.FC = () => {
   );
 };
 
-// Breadcrumb component wrapper
-const Breadcrumb: React.FC<{ items: any[] }> = ({ items }) => (
-  <div className="flex items-center text-sm text-gray-500 space-x-2">
-    {items.map((item, idx) => (
-      <React.Fragment key={idx}>
-        <span>{item.title}</span>
-        {idx < items.length - 1 && <span>/</span>}
-      </React.Fragment>
-    ))}
-  </div>
-);
+
 
 export default RecipeDetail;

@@ -1,95 +1,95 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { message } from 'antd';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useCallback, useRef, useState } from 'react';
 import axiosClient from '../api/axiosClient';
 import { recipeApi } from '../api/recipeApi';
 import { groupRecipesByCode } from '../helpers/recipeHelper';
-import type { IRecipe, IRecipeSearchParams, IRecipeVersionItem, IRecipeStats } from '../types/recipeTypes';
+import type { IRecipe, IRecipeSearchParams } from '../types/recipeTypes';
 
-// Hook quản lý danh sách công thức: tải dữ liệu, phân trang và xử lý Drawer
 export const useRecipes = () => {
   const restoredRef = useRef(false);
-  const [stats, setStats] = useState<IRecipeStats>({ total: 0, active: 0, totalVersions: 0 });
-  const [data, setData] = useState<IRecipe[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [params, setParams] = useState<IRecipeSearchParams>({ page: 1, limit: 20 });
-  const [total, setTotal] = useState(0);
+
+  // 1. Quản lý trạng thái URL thông qua TanStack Router
+  const params = useSearch({ from: '/recipes' });
+  const navigate = useNavigate({ from: '/recipes' });
+
+  // 2. Các trạng thái giao diện nội bộ cho Drawer và phiên bản
   const [selectedRecipe, setSelectedRecipe] = useState<IRecipe | null>(null);
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
-  const [versionRows, setVersionRows] = useState<IRecipeVersionItem[]>([]);
-  const [versionLoading, setVersionLoading] = useState(false);
 
-  // Tải danh sách công thức từ API và xử lý gộp nhóm phiên bản
-  const fetchRecipes = useCallback(async (currentParams: IRecipeSearchParams) => {
-    setLoading(true);
-    try {
-      const searchRes: any = await recipeApi.search(currentParams);
-      if (searchRes) {
-        const rawItems = searchRes.items ?? searchRes.Items ?? searchRes.data?.items ?? searchRes.data?.Items ?? (Array.isArray(searchRes) ? searchRes : []);
-        setData(groupRecipesByCode(rawItems));
-        setTotal(searchRes.total ?? searchRes.Total ?? searchRes.data?.total ?? searchRes.data?.Total ?? 0);
-      }
+  // Helper cập nhật Search Params lên URL
+  const setParams = useCallback((updater: (prev: IRecipeSearchParams) => IRecipeSearchParams) => {
+    navigate({
+      search: (prev) => updater(prev as IRecipeSearchParams),
+      replace: true,
+    });
+  }, [navigate]);
 
-      const statsRes: any = await recipeApi.getStats(currentParams);
-      if (statsRes) {
-        setStats({
-          total: statsRes.total ?? statsRes.Total ?? statsRes.data?.total ?? statsRes.data?.Total ?? 0,
-          active: statsRes.active ?? statsRes.Active ?? statsRes.data?.active ?? statsRes.data?.Active ?? 0,
-          totalVersions: statsRes.totalVersions ?? statsRes.TotalVersions ?? statsRes.data?.totalVersions ?? statsRes.data?.totalVersions ?? 0
-        });
-      }
-    } catch {
-      message.error('Lỗi tải danh sách công thức');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Query: Lấy danh sách công thức dựa trên bộ lọc URL và xử lý gộp nhóm
+  const { data: recipeData, isLoading: loading, refetch: fetchRecipes } = useQuery({
+    queryKey: ['recipes', params],
+    queryFn: async () => {
+      const searchRes: any = await recipeApi.search(params);
+      const rawItems = searchRes.items ?? searchRes.Items ?? searchRes.data?.items ?? searchRes.data?.Items ?? (Array.isArray(searchRes) ? searchRes : []);
+      const total = searchRes.total ?? searchRes.Total ?? searchRes.data?.total ?? searchRes.data?.Total ?? 0;
+      return { items: groupRecipesByCode(rawItems), total };
+    },
+  });
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      fetchRecipes(params);
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [fetchRecipes, params.page, params.limit, params.search, params.statuses]);
+  // Query: Lấy số liệu thống kê công thức dựa trên bộ lọc URL
+  const { data: stats = { total: 0, active: 0, totalVersions: 0 } } = useQuery({
+    queryKey: ['recipesStats', params],
+    queryFn: async () => {
+      const statsRes: any = await recipeApi.getStats(params);
+      return {
+        total: statsRes.total ?? statsRes.Total ?? statsRes.data?.total ?? statsRes.data?.Total ?? 0,
+        active: statsRes.active ?? statsRes.Active ?? statsRes.data?.active ?? statsRes.data?.Active ?? 0,
+        totalVersions: statsRes.totalVersions ?? statsRes.TotalVersions ?? statsRes.data?.totalVersions ?? statsRes.data?.totalVersions ?? 0
+      };
+    },
+  });
 
+  // Query: Lấy danh sách các phiên bản của một công thức khi mở Drawer
+  const { data: versionRows = [], isLoading: versionLoading } = useQuery({
+    queryKey: ['recipeVersions', selectedRecipe?.recipeCode],
+    queryFn: async () => {
+      if (!selectedRecipe?.recipeCode) return [];
+      const payload: any = await axiosClient.get('/production-order-detail/recipe-versions', {
+        params: { recipeCode: selectedRecipe.recipeCode || '' },
+      });
+      return payload?.items ?? payload?.Items ?? payload?.data?.items ?? payload?.data?.Items ?? (Array.isArray(payload) ? payload : []);
+    },
+    enabled: isDetailDrawerOpen && !!selectedRecipe?.recipeCode,
+  });
+
+  // Xử lý thay đổi bộ lọc từ giao diện
   const onFilterChange = (key: string, value: any) => {
     setParams(prev => ({ ...prev, [key]: value || undefined, page: 1 }));
   };
 
+  // Xử lý thay đổi trang và giới hạn hiển thị
   const onPageChange = useCallback((page: number, pageSize: number) => {
     setParams(prev => ({ ...prev, page, limit: pageSize }));
-  }, []);
+  }, [setParams]);
 
-  // Mở Drawer chi tiết và tải danh sách các phiên bản của công thức
-  const openDetailDrawer = useCallback(async (recipe: IRecipe) => {
+  // Mở Drawer chi tiết cho một công thức
+  const openDetailDrawer = useCallback((recipe: IRecipe) => {
     setSelectedRecipe(recipe);
     setIsDetailDrawerOpen(true);
-    setVersionLoading(true);
-    try {
-      const payload: any = await axiosClient.get('/production-order-detail/recipe-versions', {
-        params: { recipeCode: recipe.recipeCode || '' },
-      });
-      const items = payload?.items ?? payload?.Items ?? payload?.data?.items ?? payload?.data?.Items ?? (Array.isArray(payload) ? payload : []);
-      setVersionRows(items);
-    } catch {
-      setVersionRows([]);
-      message.error('Không tải được danh sách phiên bản công thức');
-    } finally {
-      setVersionLoading(false);
-    }
   }, []);
 
+  // Đóng Drawer chi tiết
   const closeDetailDrawer = useCallback(() => {
     setIsDetailDrawerOpen(false);
     setSelectedRecipe(null);
-    setVersionRows([]);
   }, []);
 
   return {
     stats,
-    data,
+    data: recipeData?.items || [],
     loading,
     params,
-    total,
+    total: recipeData?.total || 0,
     selectedRecipe,
     isDetailDrawerOpen,
     versionRows,

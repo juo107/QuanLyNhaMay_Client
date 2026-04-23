@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { Card, Row, Col, Statistic, Button, Tag, Typography, Radio, Pagination, Empty, Modal } from 'antd';
 import {
   FileTextOutlined,
@@ -14,6 +14,7 @@ import Table from '../components/Table';
 import FilterSearchBar from '../components/FilterSearchBar';
 import CardCommon from '../components/CardCommon';
 import { useProductionStatus } from '../hooks/useProductionStatus';
+import { useResponsive } from '../hooks/useResponsive';
 import { getProductionStatusColumns } from '../components/ProductionStatus/ProductionStatusColumns';
 import ProductionOrderDetailTable from '../components/ProductionStatus/ProductionOrderDetailTable';
 import type { IProductionOrder } from '../types/productionOrderTypes';
@@ -22,6 +23,7 @@ import './ProductionStatus.css';
 const { Text, Title } = Typography;
 
 const ProductionStatus: React.FC = () => {
+  const { isMobile, isTablet } = useResponsive();
   const navigate = useNavigate();
   const {
     stats,
@@ -46,7 +48,7 @@ const ProductionStatus: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const columns = useMemo(() => getProductionStatusColumns(navigate, onShowDetail), [navigate]);
+  const columns = useMemo(() => getProductionStatusColumns(navigate, onShowDetail), [navigate, onShowDetail]);
 
   return (
     <div className="space-y-6">
@@ -67,35 +69,35 @@ const ProductionStatus: React.FC = () => {
         </Radio.Group>
       </div>
 
-      <Row gutter={16}>
-        <Col span={6}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Tổng Lệnh SX" value={stats.Total} valueStyle={{ color: '#1677ff' }} prefix={<FileTextOutlined />} />
+      <Row gutter={[16, 16]}>
+        <Col xs={12} sm={12} lg={6}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Tổng Lệnh SX" value={stats.Total} styles={{ content: { color: '#1677ff' } }} prefix={<FileTextOutlined />} />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Đang Chạy" value={stats.InProgress} valueStyle={{ color: '#fa8c16' }} prefix={<PlayCircleOutlined />} />
+        <Col xs={12} sm={12} lg={6}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Đang Chạy" value={stats.InProgress} styles={{ content: { color: '#fa8c16' } }} prefix={<PlayCircleOutlined />} />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Hoàn Thành" value={stats.Completed} valueStyle={{ color: '#3f8600' }} prefix={<CheckCircleOutlined />} />
+        <Col xs={12} sm={12} lg={6}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Hoàn Thành" value={stats.Completed} styles={{ content: { color: '#3f8600' } }} prefix={<CheckCircleOutlined />} />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card bordered={false} className="shadow-sm">
-            <Statistic title="Đang Chờ" value={stats.Stopped} valueStyle={{ color: '#1677ff' }} prefix={<ClockCircleOutlined />} />
+        <Col xs={12} sm={12} lg={6}>
+          <Card variant="borderless" className="shadow-sm">
+            <Statistic title="Đang Chờ" value={stats.Stopped} styles={{ content: { color: '#1677ff' } }} prefix={<ClockCircleOutlined />} />
           </Card>
         </Col>
       </Row>
 
-      <Card bordered={false} className="shadow-sm">
+      <Card variant="borderless" className="shadow-sm">
         <FilterSearchBar
           filters={filterConfig}
           values={params as Record<string, any>}
           onChange={onFilterChange}
-          onRefresh={() => fetchData(params)}
+          onRefresh={() => fetchData()}
         />
 
         {loading ? (
@@ -112,14 +114,15 @@ const ProductionStatus: React.FC = () => {
             currentPage={params.page}
             pageSize={params.limit}
             onPageChange={onPageChange}
-            onRow={() => ({
-              style: { cursor: 'default' },
+            onRow={(record: IProductionOrder) => ({
+              onClick: () => onShowDetail(record),
+              className: 'cursor-pointer hover:bg-gray-50 transition-colors',
             })}
           />
         ) : data.length > 0 ? (
           <>
             <Row gutter={[20, 20]} className="mt-6 flex flex-wrap">
-              {data.map((record) => {
+              {data.map((record: IProductionOrder) => {
                 const isRunning = record.status === 1;
                 const statusText = isRunning ? 'Đang chạy' : 'Đang chờ';
                 const statusColor = isRunning ? 'orange' : '#1677ff';
@@ -129,7 +132,7 @@ const ProductionStatus: React.FC = () => {
                   <Col xs={24} sm={12} md={12} lg={8} xl={6} key={record.productionOrderId} style={{ display: 'flex' }}>
                     <CardCommon
                       title={record.productionOrderNumber}
-                      onTitleClick={() => navigate(`/production-status/${record.productionOrderId}`)}
+                      onTitleClick={() => navigate({ to: '/production-status/$id', params: { id: String(record.productionOrderId) }, search: (prev: any) => prev })}
                       statusText={statusText}
                       statusColor={statusColor}
                       statusIcon={statusIcon}
@@ -189,7 +192,7 @@ const ProductionStatus: React.FC = () => {
         footer={[
           <Button key="full" type="primary" className="bg-[#5b4ce8]" onClick={() => {
             setIsModalOpen(false);
-            if (selectedOrder) navigate(`/production-status/${selectedOrder.productionOrderId}`);
+            if (selectedOrder) navigate({ to: '/production-status/$id', params: { id: String(selectedOrder.productionOrderId) }, search: (prev: any) => prev });
           }}>
             Xem Chi Tiết Đầy Đủ
           </Button>,
@@ -197,7 +200,7 @@ const ProductionStatus: React.FC = () => {
             Đóng
           </Button>,
         ]}
-        width={1000}
+        width={isMobile ? '100%' : isTablet ? 800 : 1000}
         centered
         className="premium-modal"
       >

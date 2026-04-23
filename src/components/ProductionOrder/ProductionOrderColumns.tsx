@@ -1,9 +1,8 @@
-import React from 'react';
-import { Tag, Button } from 'antd';
-import { PlayCircleOutlined, ClockCircleOutlined, EyeOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, EyeOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { Button, Tag } from 'antd';
 import dayjs from 'dayjs';
-import { formatUnit } from '../../utils/format';
 import type { IProductionOrder } from '../../types/productionOrderTypes';
+import { formatUnit } from '../../utils/format';
 
 export const getProductionOrderColumns = (showDetail: (record: IProductionOrder) => void) => [
   {
@@ -11,6 +10,7 @@ export const getProductionOrderColumns = (showDetail: (record: IProductionOrder)
     dataIndex: 'productionOrderNumber',
     key: 'productionOrderNumber',
     width: 150,
+    sorter: (a: IProductionOrder, b: IProductionOrder) => a.productionOrderNumber.localeCompare(b.productionOrderNumber),
     render: (text: string) => <span className="font-semibold text-gray-700">{text}</span>,
   },
   {
@@ -18,19 +18,27 @@ export const getProductionOrderColumns = (showDetail: (record: IProductionOrder)
     dataIndex: 'productCode',
     key: 'productCode',
     width: 150,
-    render: (text: string, record: IProductionOrder) => (
-      <div className="flex flex-col">
-        <span className="font-bold text-gray-800 text-[13px]">{text}</span>
-        <span className="text-gray-400 text-[11px] font-normal truncate max-w-[150px]">{record.productName}</span>
-      </div>
-    ),
+    sorter: (a: IProductionOrder, b: IProductionOrder) => a.productCode.localeCompare(b.productCode),
+    render: (text: string, record: any) => {
+      const pName = record.productName || record.ProductName || record.itemName || record.ItemName || record.productDescription || record.ProductDescription;
+      return (
+        <div className="py-1 whitespace-normal break-words min-w-[180px]">
+          <span className="text-gray-800 text-[13px] font-medium">{text}</span>
+          {pName && (
+            <span className="text-gray-600 text-[12px] font-medium ml-1">
+              - {pName}
+            </span>
+          )}
+        </div>
+      );
+    },
   },
   {
     title: 'Dây Chuyền',
     dataIndex: 'productionLine',
     key: 'productionLine',
     align: 'center' as const,
-    width: 100,
+    width: 50,
     render: (text: string) => (
       <Tag color="processing" className="rounded-full px-3 py-0.5 border-none bg-blue-500 text-white font-medium">
         {text}
@@ -41,26 +49,33 @@ export const getProductionOrderColumns = (showDetail: (record: IProductionOrder)
     title: 'Công Thức',
     dataIndex: 'recipeCode',
     key: 'recipeCode',
-    width: 150,
+    width: 70,
     render: (text: string) => <span className="font-medium text-gray-700 text-[12px]">{text}</span>,
   },
   {
     title: 'Process Area',
     dataIndex: 'processArea',
     key: 'processArea',
-    width: 140,
+    ellipsis: true,
+    width: 60,
     align: 'center' as const,
   },
   {
     title: 'Ca',
     dataIndex: 'shift',
     key: 'shift',
-    width: 80,
+    ellipsis: true,
+    width: 50,
   },
   {
     title: 'Ngày BĐ / SL',
     key: 'dateQty',
-    width: 140,
+    width: 60,
+    sorter: (a: IProductionOrder, b: IProductionOrder) => {
+      const dateA = a.plannedStart ? dayjs(a.plannedStart).unix() : 0;
+      const dateB = b.plannedStart ? dayjs(b.plannedStart).unix() : 0;
+      return dateA - dateB;
+    },
     render: (_: any, record: IProductionOrder) => (
       <div className="flex flex-col">
         <span className="text-gray-500 text-[12px]">{record.plannedStart ? dayjs(record.plannedStart).format('DD/MM/YYYY') : '-'}</span>

@@ -1,23 +1,30 @@
 import axiosClient from './axiosClient';
-import type { IConsumptionRecord, IConsumptionSearchParams, IConsumptionStats } from '../types/consumption';
+import type { IConsumptionRecord, IConsumptionSearchParams } from '../types/consumption';
 
 export const consumptionApi = {
   async search(params: IConsumptionSearchParams) {
+    // Destructure để loại bỏ các trường thừa và chuẩn hóa cho Backend .NET
+    const { dateFrom, dateTo, pageSize, ...rest } = params;
+    
     const mappedParams = {
-      ...params,
-      fromDate: params.dateFrom,
-      toDate: params.dateTo,
-      pageSize: params.limit,
+      ...rest,
+      fromDate: dateFrom,
+      toDate: dateTo,
+      pageSize: pageSize,
     };
+
     return await axiosClient.get('/production-materials/search', { params: mappedParams });
   },
 
-  async getStats(params: Omit<IConsumptionSearchParams, 'page' | 'limit'>) {
+  async getStats(params: Omit<IConsumptionSearchParams, 'page' | 'pageSize'>) {
+    const { dateFrom, dateTo, ...rest } = params;
+    
     const mappedParams = {
-      ...params,
-      fromDate: params.dateFrom,
-      toDate: params.dateTo,
+      ...rest,
+      fromDate: dateFrom,
+      toDate: dateTo,
     };
+    
     return await axiosClient.get('/production-materials/stats/search', { params: mappedParams });
   },
 

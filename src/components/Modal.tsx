@@ -27,8 +27,8 @@ export const Modal: React.FC<ICommonModalProps> = ({
       onCancel={onClose}
       width={width}
       footer={hideFooter ? null : props.footer}
-      destroyOnClose
-      maskClosable={true}
+      destroyOnHidden
+      mask={{ closable: true }}
       centered
       className="custom-modal"
       {...props}

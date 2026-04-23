@@ -1,32 +1,43 @@
-import { useState, useCallback, useEffect } from 'react';
-import { message } from 'antd';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useCallback, useState } from 'react';
 import { productionOrderApi } from '../api/productionOrderApi';
-import type { IProductionOrder, IBatch } from '../types/productionOrderTypes';
+import type { IBatch } from '../types/productionOrderTypes';
 
 export const useProductionOrderDetail = (id: string | undefined) => {
-  const [loading, setLoading] = useState(true);
-  const [order, setOrder] = useState<IProductionOrder | null>(null);
-  const [batches, setBatches] = useState<IBatch[]>([]);
-  const [activeTab, setActiveTab] = useState('batches');
+  const search = useSearch({ from: '/production-status/$id' });
+  const navigate = useNavigate({ from: '/production-status/$id' });
+
+  const activeTab = search.tab;
+  const batchFilter = search.batchFilter;
+
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
-  const [batchFilter, setBatchFilter] = useState<string | null>(null);
 
-  const fetchDetail = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
-    try {
+  // Lấy chi tiết thông tin Lệnh Sản Xuất dựa trên ID từ URL
+  const { data: order, isLoading: loading, refetch: fetchOrderInfo } = useQuery({
+    queryKey: ['productionOrder', id],
+    queryFn: async () => {
+      if (!id) return null;
       const parsedId = parseInt(id, 10);
-      
-      const resDetail: any = await productionOrderApi.getDetail(parsedId);
-      const orderData = resDetail?.data ?? resDetail;
-      if (orderData) {
-        setOrder(orderData);
-      }
+      const res: any = await productionOrderApi.getDetail(parsedId);
+      return res?.data ?? res;
+    },
+    enabled: !!id,
+  });
 
-      // Fetch planned batches
-      const resBatches: any = await productionOrderApi.getBatches(parsedId);
+  // Lấy danh sách các mẻ sản xuất (kế hoạch và thực tế) và gộp dữ liệu
+  const { data: batches = [], isLoading: batchLoading, refetch: fetchBatches } = useQuery({
+    queryKey: ['productionOrderBatches', id, order?.productionOrderNumber],
+    queryFn: async () => {
+      if (!id || !order?.productionOrderNumber) return [];
+      const parsedId = parseInt(id, 10);
+
+      const [resBatches, actualRes]: any[] = await Promise.all([
+        productionOrderApi.getBatches(parsedId),
+        productionOrderApi.getBatchCodesWithMaterials(order.productionOrderNumber)
+      ]);
+
       const rawPlanned = resBatches?.items ?? resBatches?.Items ?? resBatches?.data?.items ?? resBatches?.data?.Items ?? (Array.isArray(resBatches?.data) ? resBatches.data : (Array.isArray(resBatches) ? resBatches : []));
-      
       const plannedBatches: IBatch[] = Array.isArray(rawPlanned) ? rawPlanned.map((b: any) => ({
         batchId: b.batchId ?? b.BatchId,
         productionOrderId: b.productionOrderId ?? b.ProductionOrderId,
@@ -36,73 +47,60 @@ export const useProductionOrderDetail = (id: string | undefined) => {
         status: b.status ?? b.Status
       })) : [];
 
-      // Fetch actual batch codes (including those without planned lot)
-      if (orderData?.productionOrderNumber) {
-        try {
-          const actualRes: any = await productionOrderApi.getBatchCodesWithMaterials(orderData.productionOrderNumber);
-          const actualItems = actualRes?.items ?? actualRes?.Items ?? actualRes?.data?.items ?? actualRes?.data?.Items ?? (Array.isArray(actualRes?.data) ? actualRes.data : (Array.isArray(actualRes) ? actualRes : []));
-          const actualCodes: (string | null)[] = actualItems.map((b: any) => (b.batchCode || b.BatchCode));
+      const actualItems = actualRes?.items ?? actualRes?.Items ?? actualRes?.data?.items ?? actualRes?.data?.Items ?? (Array.isArray(actualRes?.data) ? actualRes.data : (Array.isArray(actualRes) ? actualRes : []));
+      const actualCodes: (string | null)[] = actualItems.map((b: any) => (b.batchCode || b.BatchCode));
 
-          // Merge actual batches into the list
-          const mergedMap = new Map<string | null, IBatch>();
-          
-          // Start with planned
-          plannedBatches.forEach(b => {
-             const key = b.batchNumber ? b.batchNumber.trim().toUpperCase() : null;
-             mergedMap.set(key, b);
-          });
+      const mergedMap = new Map<string | null, IBatch>();
+      plannedBatches.forEach(b => {
+        const key = b.batchNumber ? b.batchNumber.trim().toUpperCase() : null;
+        mergedMap.set(key, b);
+      });
 
-          // Add actual batches that aren't in planned
-          let virtualIdCounter = -10;
-          actualCodes.forEach(code => {
-             const normalizedCode = (code || "").trim().toUpperCase();
-             if (normalizedCode && !mergedMap.has(normalizedCode)) {
-               mergedMap.set(normalizedCode, {
-                 batchId: virtualIdCounter--, // Unique Virtual ID
-                 batchNumber: normalizedCode,
-                 quantity: 0,
-                 unitOfMeasurement: '',
-                 status: 1 
-               } as IBatch);
-             } else if (code === null || normalizedCode === "") {
-                // Handle "No Batch" case
-                if (!mergedMap.has(null)) {
-                  mergedMap.set(null, {
-                    batchId: -2, // Virtual ID for No Batch
-                    batchNumber: null as any,
-                    quantity: 0,
-                    unitOfMeasurement: '',
-                    status: 1
-                  } as IBatch);
-                }
-             }
-          });
-
-          setBatches(Array.from(mergedMap.values()));
-        } catch (e) {
-          console.error("Error fetching actual batches:", e);
-          setBatches(plannedBatches);
+      let virtualIdCounter = -10;
+      actualCodes.forEach(code => {
+        const normalizedCode = (code || "").trim().toUpperCase();
+        if (normalizedCode && !mergedMap.has(normalizedCode)) {
+          mergedMap.set(normalizedCode, {
+            batchId: virtualIdCounter--,
+            batchNumber: normalizedCode,
+            quantity: 0,
+            unitOfMeasurement: '',
+            status: 1
+          } as IBatch);
+        } else if (code === null || normalizedCode === "") {
+          if (!mergedMap.has(null)) {
+            mergedMap.set(null, {
+              batchId: -2,
+              batchNumber: null as any,
+              quantity: 0,
+              unitOfMeasurement: '',
+              status: 1
+            } as IBatch);
+          }
         }
-      } else {
-        setBatches(plannedBatches);
-      }
-    } catch {
-      message.error('Không thể tải chi tiết Lệnh Sản Xuất');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+      });
+      return Array.from(mergedMap.values());
+    },
+    enabled: !!id && !!order?.productionOrderNumber && (activeTab === 'batches' || activeTab === 'materials'),
+  });
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      fetchDetail();
-    }, 250);
+  // Chuyển đổi tab hiển thị và đồng bộ lên URL
+  const setActiveTab = useCallback((tab: string) => {
+    navigate({
+      search: (prev: any) => ({ ...prev, tab: tab as any }),
+    });
+  }, [navigate]);
 
-    return () => window.clearTimeout(timer);
-  }, [fetchDetail]);
+  // Thiết lập bộ lọc theo mã mẻ (Batch) và đồng bộ lên URL
+  const setBatchFilter = useCallback((filter: string | null) => {
+    navigate({
+      search: (prev: any) => ({ ...prev, batchFilter: filter || undefined }),
+    });
+  }, [navigate]);
 
   return {
     loading,
+    batchLoading,
     order,
     batches,
     activeTab,
@@ -111,6 +109,7 @@ export const useProductionOrderDetail = (id: string | undefined) => {
     setIsHeaderExpanded,
     batchFilter,
     setBatchFilter,
-    fetchDetail
+    fetchOrderInfo,
+    fetchBatches
   };
 };

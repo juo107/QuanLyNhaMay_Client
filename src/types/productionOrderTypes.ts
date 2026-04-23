@@ -41,14 +41,14 @@ export interface IProductionOrderStats {
 }
 
 export interface IProductionOrderParams {
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
   searchQuery?: string;
   dateFrom?: string;
   dateTo?: string;
-  processAreas?: string;
-  shifts?: string;
-  statuses?: string;
+  processAreas?: string[];
+  shifts?: string[];
+  statuses?: string[];
 }
 
 export interface IMaterialConsumption {

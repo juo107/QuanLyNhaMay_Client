@@ -1,8 +1,7 @@
-import React from 'react';
-import { Tag, Tooltip, Button } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
+import { Button, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
-import type { IGroupedMaterial, IMaterialConsumption } from '../../types/productionOrderTypes';
+import type { IGroupedMaterial } from '../../types/productionOrderTypes';
 
 interface GetColumnsProps {
   onView: (record: IGroupedMaterial) => void;
@@ -28,7 +27,7 @@ export const getMaterialsTableColumns = ({ onView }: GetColumnsProps) => [
     render: (text: string) => {
       if (!text || text === '-') return <span className="text-gray-300 italic">-</span>;
       const batches = text.split(',').map(b => b.trim());
-      
+
       // Nếu số lượng Batch ít (<= 5) thì hiện ra hết cho đẹp
       if (batches.length <= 5) {
         return (
@@ -42,7 +41,7 @@ export const getMaterialsTableColumns = ({ onView }: GetColumnsProps) => [
         );
       }
       return (
-        <Tooltip 
+        <Tooltip
           title={
             <div className="flex flex-wrap gap-1 p-1">
               {batches.map(b => (
@@ -89,6 +88,7 @@ export const getMaterialsTableColumns = ({ onView }: GetColumnsProps) => [
     key: 'totalPlanQuantity',
     align: 'right' as const,
     width: 140,
+    sorter: (a: IGroupedMaterial, b: IGroupedMaterial) => a.totalPlanQuantity - b.totalPlanQuantity,
     render: (_: any, record: IGroupedMaterial) => (
       <div className="flex justify-end items-center gap-1.5">
         <span className="text-[13px] text-gray-800 font-medium">
@@ -103,6 +103,7 @@ export const getMaterialsTableColumns = ({ onView }: GetColumnsProps) => [
     key: 'totalQuantity',
     align: 'right' as const,
     width: 140,
+    sorter: (a: IGroupedMaterial, b: IGroupedMaterial) => a.totalQuantity - b.totalQuantity,
     render: (_: any, record: IGroupedMaterial) => (
       <div className="flex justify-end items-center gap-1.5">
         <span className={`text-[13px] font-bold ${record.totalQuantity > 0 ? 'text-gray-800' : 'text-gray-300'}`}>

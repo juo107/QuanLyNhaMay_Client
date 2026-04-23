@@ -1,11 +1,9 @@
-import { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useCallback, useMemo, useState } from 'react';
 import { productionOrderApi } from '../api/productionOrderApi';
-import type { IProductionStatusParams } from '../api/productionOrderApi';
-import type { IProductionOrder } from '../types/productionOrderTypes';
 import type { FilterItem } from '../components/FilterSearchBar';
-import { useSearch, useNavigate } from '@tanstack/react-router';
+import type { IProductionOrder } from '../types/productionOrderTypes';
 
 export const useProductionOrders = () => {
   // 1. Quản lý trạng thái URL thông qua TanStack Router
@@ -19,9 +17,9 @@ export const useProductionOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState<IProductionOrder | null>(null);
 
   // Helper cập nhật Search Params lên URL
-  const setParams = useCallback((updater: (prev: IProductionStatusParams) => IProductionStatusParams) => {
+  const setParams = useCallback((updater: (prev: any) => any) => {
     navigate({
-      search: (prev) => updater(prev as IProductionStatusParams),
+      search: (prev) => updater(prev),
       replace: true,
     });
   }, [navigate]);
@@ -32,8 +30,6 @@ export const useProductionOrders = () => {
     queryFn: async () => {
       const finalParams = {
         ...params,
-        dateFrom: params.dateFrom || dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss'),
-        dateTo: params.dateTo || dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss'),
       };
       const res: any = await productionOrderApi.search(finalParams);
       const items = res.items ?? res.Items ?? res.data?.items ?? res.data?.Items ?? (Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []));
@@ -48,8 +44,6 @@ export const useProductionOrders = () => {
     queryFn: async () => {
       const finalParams = {
         ...params,
-        dateFrom: params.dateFrom || dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss'),
-        dateTo: params.dateTo || dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss'),
       };
       const res: any = await productionOrderApi.getStats(finalParams);
       const s = res.data ?? res;
@@ -60,6 +54,20 @@ export const useProductionOrders = () => {
         stopped: s.stopped ?? s.Stopped ?? 0
       };
     },
+  });
+
+  // Query: Lấy dữ liệu danh sách lọc (Process Area, Shifts) từ API
+  const { data: filters = { processAreas: [], shifts: [] } } = useQuery({
+    queryKey: ['productionFilters'],
+    queryFn: async () => {
+      const res: any = await productionOrderApi.getFilters();
+      const d = res?.data ?? res;
+      return {
+        processAreas: d?.processAreas ?? d?.ProcessAreas ?? [],
+        shifts: d?.shifts ?? d?.Shifts ?? []
+      };
+    },
+    staleTime: 60 * 60 * 1000, // 1 hour
   });
 
   // Query: Lấy danh sách mẻ (Batches) khi mở Modal chi tiết
@@ -122,21 +130,20 @@ export const useProductionOrders = () => {
       key: 'processAreas',
       placeholder: 'Khu vực',
       minWidth: 160,
-      options: [
-        { value: 'P01', label: 'P01' },
-        { value: 'P02', label: 'P02' },
-      ],
+      options: filters.processAreas.map((a: any) => {
+        const val = typeof a === 'object' ? (a.value || a.Value || a.processArea || '') : a;
+        return { value: val, label: val };
+      }),
     },
     {
       type: 'checkboxSelect',
       key: 'shifts',
       placeholder: 'Ca làm',
       minWidth: 120,
-      options: [
-        { value: 'Ca 1', label: 'Ca 1' },
-        { value: 'Ca 2', label: 'Ca 2' },
-        { value: 'Ca 3', label: 'Ca 3' },
-      ],
+      options: filters.shifts.map((s: any) => {
+        const val = typeof s === 'object' ? (s.value || s.Value || s.shift || '') : s;
+        return { value: val, label: val };
+      }),
     },
     {
       type: 'checkboxSelect',

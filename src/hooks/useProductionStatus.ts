@@ -1,10 +1,9 @@
-import { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useCallback, useMemo, useState } from 'react';
 import { productionOrderApi } from '../api/productionOrderApi';
-import type { IProductionOrder, IProductionOrderParams } from '../types/productionOrderTypes';
 import type { FilterItem } from '../components/FilterSearchBar';
-import { useSearch, useNavigate } from '@tanstack/react-router';
+import type { IProductionOrder } from '../types/productionOrderTypes';
 
 export const useProductionStatus = () => {
   // 1. Quản lý trạng thái URL thông qua TanStack Router
@@ -17,9 +16,9 @@ export const useProductionStatus = () => {
   const [selectedOrder, setSelectedOrder] = useState<IProductionOrder | null>(null);
 
   // Helper cập nhật Search Params lên URL
-  const setParams = useCallback((updater: (prev: IProductionOrderParams) => IProductionOrderParams) => {
+  const setParams = useCallback((updater: (prev: any) => any) => {
     navigate({
-      search: (prev) => updater(prev as IProductionOrderParams),
+      search: (prev) => updater(prev),
       replace: true,
     });
   }, [navigate]);
@@ -30,8 +29,6 @@ export const useProductionStatus = () => {
     queryFn: async () => {
       const finalParams = {
         ...params,
-        dateFrom: params.dateFrom || dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss'),
-        dateTo: params.dateTo || dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss'),
       };
       const searchRes: any = await productionOrderApi.search(finalParams);
       const items = searchRes.items ?? searchRes.Items ?? searchRes.data?.items ?? searchRes.data?.Items ?? (Array.isArray(searchRes) ? searchRes : []);
@@ -46,8 +43,6 @@ export const useProductionStatus = () => {
     queryFn: async () => {
       const finalParams = {
         ...params,
-        dateFrom: params.dateFrom || dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss'),
-        dateTo: params.dateTo || dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss'),
       };
       const statsRes: any = await productionOrderApi.getStats(finalParams);
       const s = statsRes.data ?? statsRes;

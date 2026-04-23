@@ -1,15 +1,15 @@
-import React, { useMemo, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Button, Tag, Tooltip, Typography, Descriptions, Spin, Empty, Table as AntdTable, Tabs } from 'antd';
-import { ExperimentOutlined, CheckCircleOutlined, HistoryOutlined, EyeOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, ExperimentOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
+import { Table as AntdTable, Card, Col, Descriptions, Empty, Row, Spin, Statistic, Tabs, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
-import Table from '../components/Table';
-import FilterSearchBar from '../components/FilterSearchBar';
+import React, { useEffect, useMemo } from 'react';
 import CommonDrawer from '../components/CommonDrawer';
+import FilterSearchBar from '../components/FilterSearchBar';
+import { getRecipeColumns, getRecipeFilters } from '../components/Recipe/RecipeColumns';
+import Table from '../components/Table';
 import { formatVersionDisplay } from '../helpers/recipeHelper';
 import { useRecipes } from '../hooks/useRecipes';
-import { getRecipeFilters, getRecipeColumns } from '../components/Recipe/RecipeColumns';
-import type { IRecipe, IRecipeVersionItem } from '../types/recipeTypes';
+import type { IRecipe } from '../types/recipeTypes';
 
 const { Text } = Typography;
 

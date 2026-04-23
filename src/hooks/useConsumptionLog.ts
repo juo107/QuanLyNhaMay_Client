@@ -1,10 +1,9 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { consumptionApi } from '../api/consumptionApi';
-import type { IConsumptionRecord, IConsumptionSearchParams } from '../types/consumption';
 import type { FilterItem } from '../components/FilterSearchBar';
-import { useSearch, useNavigate } from '@tanstack/react-router';
+import type { IConsumptionRecord, IConsumptionSearchParams } from '../types/consumption';
 
 export const useConsumptionLog = () => {
   // 1. Quản lý trạng thái URL thông qua TanStack Router
@@ -29,9 +28,9 @@ export const useConsumptionLog = () => {
   }, [params]);
 
   // Helper cập nhật Search Params lên URL
-  const setParams = useCallback((updater: (prev: IConsumptionSearchParams) => IConsumptionSearchParams) => {
+  const setParams = useCallback((updater: (prev: any) => any) => {
     navigate({
-      search: (prev) => updater(prev as IConsumptionSearchParams),
+      search: (prev) => updater(prev),
       replace: true,
     });
   }, [navigate]);
@@ -42,8 +41,6 @@ export const useConsumptionLog = () => {
     queryFn: async () => {
       const finalParams = {
         ...debouncedParams,
-        dateFrom: debouncedParams.dateFrom || dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss'),
-        dateTo: debouncedParams.dateTo || dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss'),
       };
 
       const cleanParams = Object.fromEntries(

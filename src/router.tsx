@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
 import { z } from 'zod';
+import dayjs from 'dayjs';
 
 // Import Pages
 import AdminLayout from './components/AdminLayout';
@@ -11,6 +12,7 @@ import Products from './pages/Products';
 import RecipeDetail from './pages/RecipeDetail';
 import Recipes from './pages/Recipes';
 import NotFound from './pages/NotFound';
+import MESCompleteBatch from './pages/MESCompleteBatch';
 
 // 1. Root Route - Sử dụng AdminLayout làm khung chính
 const rootRoute = createRootRoute({
@@ -25,7 +27,12 @@ const indexRoute = createRoute({
   beforeLoad: () => {
     throw redirect({
       to: '/production-orders',
-      search: { page: 1, limit: 20 }
+      search: {
+        page: 1,
+        limit: 20,
+        dateFrom: dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss'),
+        dateTo: dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss'),
+      }
     });
   },
 });
@@ -40,8 +47,8 @@ const arraySearchSchema = z.preprocess(
 const consumptionSearchSchema = z.object({
   page: z.number().catch(1),
   pageSize: z.number().catch(20),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
+  dateFrom: z.string().catch(() => dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss')),
+  dateTo: z.string().catch(() => dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss')),
   productionOrderNumber: z.string().optional(),
   batchCode: z.string().optional(),
   ingredientCode: z.string().optional(),
@@ -60,8 +67,8 @@ const consumptionLogRoute = createRoute({
 const productionStatusSearchSchema = z.object({
   page: z.number().catch(1),
   limit: z.number().catch(20),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
+  dateFrom: z.string().catch(() => dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss')),
+  dateTo: z.string().catch(() => dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss')),
   searchQuery: z.string().optional(),
   processAreas: arraySearchSchema,
   shifts: arraySearchSchema,
@@ -78,8 +85,8 @@ const productionStatusRoute = createRoute({
 const productionOrdersSearchSchema = z.object({
   page: z.number().catch(1),
   limit: z.number().catch(20),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
+  dateFrom: z.string().catch(() => dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss')),
+  dateTo: z.string().catch(() => dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss')),
   pos: z.string().optional(),
   searchQuery: z.string().optional(),
   statuses: arraySearchSchema,
@@ -95,7 +102,7 @@ const productionOrdersRoute = createRoute({
 const productionOrderDetailSearchSchema = z.object({
   tab: z.enum(['batches', 'materials']).catch('batches'),
   batchFilter: z.string().optional(),
-});
+}).passthrough();
 
 const productionOrderDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -133,6 +140,25 @@ const recipesRoute = createRoute({
   validateSearch: (search) => recipesSearchSchema.parse(search),
 });
 
+const mesCompleteBatchSearchSchema = z.object({
+  page: z.number().catch(1),
+  limit: z.number().catch(20),
+  dateFrom: z.string().catch(() => dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss')),
+  dateTo: z.string().catch(() => dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss')),
+  searchQuery: z.string().optional(),
+  productionOrder: z.string().optional(),
+  batchNumber: z.string().optional(),
+  machineCode: z.string().optional(),
+  transferStatus: z.string().optional(),
+});
+
+const mesCompleteBatchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'mes-complete-batch',
+  component: MESCompleteBatch,
+  validateSearch: (search) => mesCompleteBatchSearchSchema.parse(search),
+});
+
 const recipeDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'recipes/$id',
@@ -149,6 +175,7 @@ const routeTree = rootRoute.addChildren([
   recipesRoute,
   recipeDetailRoute,
   consumptionLogRoute,
+  mesCompleteBatchRoute,
 ]);
 
 // 6. Khởi tạo Router

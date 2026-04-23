@@ -18,7 +18,7 @@ export const getProductionStatusColumns = (
           className="font-semibold text-[#5b4ce8] cursor-pointer hover:underline"
           onClick={(e) => {
             e.stopPropagation();
-            navigate({ to: '/production-status/$id', params: { id: String(record.productionOrderId) } });
+            navigate({ to: '/production-status/$id', params: { id: String(record.productionOrderId) }, search: (prev: any) => prev });
           }}
         >
           {text}

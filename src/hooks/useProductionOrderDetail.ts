@@ -53,6 +53,13 @@ export const useProductionOrderDetail = (id: string | undefined) => {
       const mergedMap = new Map<string | null, IBatch>();
       plannedBatches.forEach(b => {
         const key = b.batchNumber ? b.batchNumber.trim().toUpperCase() : null;
+        
+        // Nếu lô kế hoạch này đã có trong danh sách thực tế (actualCodes), 
+        // cập nhật trạng thái thành Hoàn thành (2)
+        if (key && actualCodes.some(code => (code || "").trim().toUpperCase() === key)) {
+          b.status = 2; 
+        }
+        
         mergedMap.set(key, b);
       });
 
@@ -65,7 +72,7 @@ export const useProductionOrderDetail = (id: string | undefined) => {
             batchNumber: normalizedCode,
             quantity: 0,
             unitOfMeasurement: '',
-            status: 1
+            status: 2 // Các lô phát sinh thực tế cũng để là Hoàn thành
           } as IBatch);
         } else if (code === null || normalizedCode === "") {
           if (!mergedMap.has(null)) {
@@ -74,7 +81,7 @@ export const useProductionOrderDetail = (id: string | undefined) => {
               batchNumber: null as any,
               quantity: 0,
               unitOfMeasurement: '',
-              status: 1
+              status: 2 // Có tiêu thụ không lô thì coi như Hoàn thành/Đã chạy
             } as IBatch);
           }
         }

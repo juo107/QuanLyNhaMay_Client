@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, useNavigate, useRouterState } from '@tanstack/react-router';
+import { useParams, useNavigate, useRouterState, Link as RouterLink } from '@tanstack/react-router';
 import { Card, Descriptions, Tag, Button, Tabs, Spin, Typography, Breadcrumb } from 'antd';
 import { ArrowLeftOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -52,12 +52,22 @@ const ProductionOrderDetail: React.FC = () => {
   return (
     <div className="space-y-4">
       <Breadcrumb
+        itemRender={(route, _params, items) => {
+          const last = items.indexOf(route) === items.length - 1;
+          return (last || !route.href) ? (
+            <span>{route.title}</span>
+          ) : (
+            <RouterLink to={route.href as any} search={true}>
+              {route.title}
+            </RouterLink>
+          );
+        }}
         items={[
           { title: 'Trang chủ', href: '/' },
           {
             title: isFromStatus ? 'Trạng thái sản xuất' : 'Lệnh sản xuất',
             href: isFromStatus ? '/production-status' : '/production-orders'
-          },
+          } as any,
           { title: `Chi tiết ${isFromStatus ? 'Trạng thái' : 'Lệnh sản xuất'} - ${id}` },
         ]}
       />
@@ -67,7 +77,7 @@ const ProductionOrderDetail: React.FC = () => {
           <div className="flex items-start gap-4">
             <Button
               icon={<ArrowLeftOutlined />}
-              onClick={() => navigate({ to: '..' })}
+              onClick={() => navigate({ to: '..', search: true })}
               className="mt-1 shadow-sm border-gray-100 hover:text-[#5b4ce8] hover:border-[#5b4ce8]"
             />
             <div>

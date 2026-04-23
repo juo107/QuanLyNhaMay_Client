@@ -17,20 +17,20 @@ export const getConsumptionLogColumns = (showDetail: (record: IConsumptionRecord
     title: 'Mã Lệnh SX',
     dataIndex: 'productionOrderNumber',
     key: 'productionOrderNumber',
-    width: 150,
+    width: 160,
     render: (text: string) => <Text strong>{text || 'NULL'}</Text>,
   },
   {
     title: 'Mã Lô (Batch)',
     dataIndex: 'batchCode',
     key: 'batchCode',
-    width: 120,
+    width: 100,
     render: (text: string) => <span className="text-gray-500 font-medium">{text || 'NULL'}</span>,
   },
   {
     title: 'Số Lượng',
     key: 'quantity',
-    width: 100,
+    width: 90,
     align: 'right' as const,
     render: (_: any, record: IConsumptionRecord) => (
       <Text strong>

@@ -2,10 +2,12 @@ import {
   BarChartOutlined,
   ContainerOutlined,
   ExperimentOutlined,
+  FileTextOutlined,
   HistoryOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  OrderedListOutlined
+  OrderedListOutlined,
+  FileDoneOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Button, Drawer, Layout, Menu, theme, Typography } from 'antd';
@@ -22,6 +24,7 @@ const menuItems = [
   { key: '/products', icon: <ContainerOutlined />, label: 'Sản phẩm' },
   { key: '/recipes', icon: <ExperimentOutlined />, label: 'Công thức' },
   { key: '/consumption-log', icon: <HistoryOutlined />, label: 'Nhật ký tiêu thụ' },
+  { key: '/mes-complete-batch', icon: <FileDoneOutlined />, label: 'Hoàn thành lô' },
 ]
 
 const AdminLayout: React.FC = () => {

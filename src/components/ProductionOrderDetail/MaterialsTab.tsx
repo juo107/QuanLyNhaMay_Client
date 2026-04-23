@@ -85,21 +85,21 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter
               >
                 Tất cả
               </div>
-              <div
-                onClick={() => {
-                  setSelectedBatchCode("");
-                  const hasConsumption = allMaterials.some(m => (!m.batchCode || m.batchCode.trim() === "") && m.id);
-                  setFilterType(hasConsumption ? 'consumed' : 'unconsumed');
-                }}
-                className={`px-4 py-1.5 rounded-full border cursor-pointer text-xs font-bold transition-all duration-200 ${selectedBatchCode === ""
-                  ? 'bg-[#5b4ce8] border-[#5b4ce8] text-white shadow-lg scale-105'
-                  : (allMaterials.some(m => (!m.batchCode || m.batchCode.trim() === "") && m.id)
-                    ? 'bg-green-50 border-green-200 text-green-700 hover:border-green-400'
-                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-[#5b4ce8]')
-                  }`}
-              >
-                Vật tư không Batch
-              </div>
+              {allMaterials.some(m => (!m.batchCode || m.batchCode.trim() === "") && m.id) && (
+                <div
+                  onClick={() => {
+                    setSelectedBatchCode("");
+                    const hasConsumption = allMaterials.some(m => (!m.batchCode || m.batchCode.trim() === "") && m.id);
+                    setFilterType(hasConsumption ? 'consumed' : 'unconsumed');
+                  }}
+                  className={`px-4 py-1.5 rounded-full border cursor-pointer text-xs font-bold transition-all duration-200 ${selectedBatchCode === ""
+                    ? 'bg-[#5b4ce8] border-[#5b4ce8] text-white shadow-lg scale-105'
+                    : 'bg-green-50 border-green-200 text-green-700 hover:border-green-400'
+                    }`}
+                >
+                  Vật tư không Batch
+                </div>
+              )}
               {batches.filter(batch => batch.batchNumber).map((batch) => {
                 const batchNumNormalized = batch.batchNumber.trim().toUpperCase();
                 const isSelected = (selectedBatchCode || '').trim().toUpperCase() === batchNumNormalized;

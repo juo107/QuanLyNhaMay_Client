@@ -25,6 +25,7 @@ const ProductionOrderDetailTable: React.FC<Props> = ({ selectedOrder }) => {
         size="small"
         column={isMobile ? 1 : isTablet ? 2 : 4}
         layout={isMobile ? 'vertical' : 'horizontal'}
+        styles={{ label: { fontWeight: 'bold' } }}
       >
         <Descriptions.Item label="Mã Lệnh SX" span={isMobile ? 1 : 2}>
           <Text strong className="text-blue-600">{selectedOrder.productionOrderNumber}</Text>

@@ -10,10 +10,12 @@ import ProductionStatus from './pages/ProductionStatus';
 import Products from './pages/Products';
 import RecipeDetail from './pages/RecipeDetail';
 import Recipes from './pages/Recipes';
+import NotFound from './pages/NotFound';
 
 // 1. Root Route - Sử dụng AdminLayout làm khung chính
 const rootRoute = createRootRoute({
   component: AdminLayout,
+  notFoundComponent: NotFound,
 });
 
 // 2. Định nghĩa các trang con

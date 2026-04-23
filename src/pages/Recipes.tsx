@@ -112,7 +112,7 @@ const Recipes: React.FC = () => {
                 key: 'info',
                 label: 'Thông tin',
                 children: (
-                  <Descriptions column={2} bordered size="middle" styles={{ label: { width: 180 } }}>
+                  <Descriptions column={2} bordered size="middle" styles={{ label: { width: 180, fontWeight: 'bold' } }}>
                     <Descriptions.Item label="ID">{selectedRecipe.recipeDetailsId || '-'}</Descriptions.Item>
                     <Descriptions.Item label="Phiên bản hiện tại">
                       <Tag color="blue">v{selectedRecipe.version || '-'}</Tag>
@@ -153,8 +153,7 @@ const Recipes: React.FC = () => {
                         size="small"
                         pagination={false}
                         dataSource={versionRows}
-                        tableLayout="fixed"
-                        scroll={{ x: 800 }}
+                        tableLayout="auto"
                         onRow={(record: any) => ({
                           onClick: () => {
                             closeDetailDrawer();
@@ -170,15 +169,14 @@ const Recipes: React.FC = () => {
                           className: 'cursor-pointer hover:bg-gray-50 transition-colors',
                         })}
                         columns={[
-                          { title: 'ID', dataIndex: 'recipeDetailsId', key: 'recipeDetailsId', width: 70 },
-                          { title: 'Version', dataIndex: 'version', key: 'version', width: 90, render: (v: string) => <Tag color="blue">{formatVersionDisplay(v)}</Tag> },
+                          { title: 'ID', dataIndex: 'recipeDetailsId', key: 'recipeDetailsId', width: 60 },
+                          { title: 'Version', dataIndex: 'version', key: 'version', width: 90, render: (v: string) => <Tag color="blue" className="m-0">{formatVersionDisplay(v)}</Tag> },
                           {
                             title: 'Recipe Name',
                             dataIndex: 'recipeName',
                             key: 'recipeName',
-                            width: 250,
                             render: (value: string) => (
-                              <div style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                              <div className="font-medium text-gray-800 break-words whitespace-normal py-1">
                                 {value || '-'}
                               </div>
                             ),
@@ -187,39 +185,15 @@ const Recipes: React.FC = () => {
                             title: 'Status',
                             dataIndex: 'recipeStatus',
                             key: 'recipeStatus',
-                            width: 120,
-                            render: (status: string) => <Tag color={status === 'Active' ? 'success' : 'default'}>{status || '-'}</Tag>,
+                            width: 100,
+                            render: (status: string) => <Tag color={status === 'Active' ? 'success' : 'default'} className="m-0">{status || '-'}</Tag>,
                           },
                           {
                             title: 'Cập nhật',
                             dataIndex: 'timestamp',
                             key: 'timestamp',
-                            width: 160,
+                            width: 140,
                             render: (ts: string) => (ts ? dayjs(ts).format('DD/MM/YYYY HH:mm') : '-'),
-                          },
-                          {
-                            title: 'Chi tiết',
-                            key: 'actions',
-                            width: 90,
-                            render: (_: unknown, row: IRecipeVersionItem) => (
-                              <Tooltip title="Mở trang chi tiết">
-                                <Button
-                                  type="text"
-                                  icon={<EyeOutlined style={{ color: '#5b4ce8', fontSize: '18px' }} />}
-                                  onClick={() => {
-                                    closeDetailDrawer();
-                                    navigate({
-                                      to: '/recipes/$id',
-                                      params: { id: String(row.recipeDetailsId) },
-                                      state: {
-                                        fromDrawer: true,
-                                        selectedRecipe: row,
-                                      } as any,
-                                    });
-                                  }}
-                                />
-                              </Tooltip>
-                            ),
                           },
                         ]}
                       />

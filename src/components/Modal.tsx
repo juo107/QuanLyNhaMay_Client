@@ -22,7 +22,7 @@ export const Modal: React.FC<ICommonModalProps> = ({
 }) => {
   return (
     <AntdModal
-      title={<div className="text-lg font-semibold text-gray-800">{title}</div>}
+      title={<div className="text-lg font-bold text-gray-800">{title}</div>}
       open={isOpen}
       onCancel={onClose}
       width={width}

@@ -22,7 +22,7 @@ export const CommonDrawer: React.FC<ICommonDrawerProps> = ({
   const { isMobile } = useResponsive();
   return (
     <AntdDrawer
-      title={<div className="text-base font-semibold text-gray-800">{title}</div>}
+      title={<div className="text-lg font-bold text-gray-800">{title}</div>}
       open={isOpen}
       onClose={onClose}
       size={size}

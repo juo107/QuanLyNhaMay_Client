@@ -142,20 +142,20 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
         // ... (phần chi tiết giữ nguyên)
         <div className="space-y-6">
           {selectedGroup && (
-            <Button 
-              type="link" 
-              icon={<ArrowLeftOutlined />} 
-              onClick={() => setSelectedItem(null)} 
+            <Button
+              type="link"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => setSelectedItem(null)}
               className="p-0 text-[#5b4ce8] font-bold"
             >
               Quay lại danh sách nhóm
             </Button>
           )}
           <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm">
-            <Descriptions 
-              bordered 
-              column={2} 
-              size="middle" 
+            <Descriptions
+              bordered
+              column={2}
+              size="middle"
               labelStyle={{ background: '#f8f9fa', fontWeight: 'bold', width: '200px', fontSize: '14px', color: '#374151' }}
               contentStyle={{ fontSize: '15px', color: '#111827', padding: '12px 24px' }}
             >
@@ -175,7 +175,7 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                 <div className="flex items-center gap-2">
                   <Text className={`text-[18px] ${(parseFloat(selectedItem.quantity as any) || 0) > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
                     {(parseFloat(selectedItem.quantity as any) || 0) > 0 ? (parseFloat(selectedItem.quantity as any) || 0).toFixed(2) : 'N/A'}
-                  </Text> 
+                  </Text>
                   <Text className="text-[12px] uppercase font-medium text-gray-500">{selectedItem.unitOfMeasurement}</Text>
                 </div>
               </Descriptions.Item>
@@ -185,8 +185,8 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                 </Text>
               </Descriptions.Item>
               <Descriptions.Item label="Trạng Thái">
-                {selectedItem.response?.includes('Success') ? 
-                  <Tag color="success" className="px-4 py-1 text-[13px] rounded-lg">SUCCESS</Tag> : 
+                {selectedItem.response?.includes('Success') ?
+                  <Tag color="success" className="px-4 py-1 text-[13px] rounded-lg">SUCCESS</Tag> :
                   <Tag color="error" className="px-4 py-1 text-[13px] rounded-lg">FAILED</Tag>
                 }
               </Descriptions.Item>

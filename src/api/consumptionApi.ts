@@ -1,5 +1,5 @@
+import type { IConsumptionSearchParams } from '../types/consumption';
 import axiosClient from './axiosClient';
-import type { IConsumptionRecord, IConsumptionSearchParams } from '../types/consumption';
 
 export const consumptionApi = {
   async search(params: IConsumptionSearchParams) {

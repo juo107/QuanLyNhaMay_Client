@@ -58,7 +58,7 @@ export function Table<T extends object>({
 }: ICommonTableProps<T>) {
   const [cols, setCols] = useState(initialColumns);
   const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
-  
+
   // Internal pagination state for client-side support
   const [internalPage, setInternalPage] = useState(1);
   const [internalPageSize, setInternalPageSize] = useState(10);
@@ -143,9 +143,9 @@ export function Table<T extends object>({
     <div className="min-w-[200px]">
       <div className="flex justify-between items-center mb-2 px-1">
         <span className="font-bold text-gray-700">Hiển thị cột</span>
-        <Button 
-          type="link" 
-          size="small" 
+        <Button
+          type="link"
+          size="small"
           onClick={() => setVisibleKeys(cols.map((c, idx) => c.key || c.dataIndex || `col-${idx}`))}
         >
           Hiện tất cả
@@ -214,13 +214,13 @@ export function Table<T extends object>({
           hidePagination
             ? false
             : {
-                current: internalPage,
-                pageSize: internalPageSize,
-                total: totalPages > 1 ? totalPages * internalPageSize : data.length,
-                showSizeChanger: true,
-                showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
-                onChange: handlePageChange,
-              }
+              current: internalPage,
+              pageSize: internalPageSize,
+              total: totalPages > 1 ? totalPages * internalPageSize : data.length,
+              showSizeChanger: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} mục`,
+              onChange: handlePageChange,
+            }
         }
         scroll={{ x: 'max-content' }}
         size="middle"

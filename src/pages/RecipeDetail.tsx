@@ -71,8 +71,8 @@ const RecipeDetail: React.FC = () => {
           <h2 className="text-2xl font-semibold">Recipe Detail</h2>
           <p className="text-gray-500 text-sm">Chi tiết công thức và thành phần sản xuất</p>
         </div>
-        <Button 
-          icon={<ArrowLeftOutlined />} 
+        <Button
+          icon={<ArrowLeftOutlined />}
           onClick={backToRecipes}
           className={isMobile ? "w-full" : ""}
         >
@@ -90,10 +90,10 @@ const RecipeDetail: React.FC = () => {
         <>
           <Card title="Thông tin chung" variant="borderless" className="shadow-sm">
             <div className="overflow-x-auto">
-              <Descriptions 
-                column={isMobile ? 1 : isTablet ? 2 : 3} 
-                bordered 
-                size="middle" 
+              <Descriptions
+                column={isMobile ? 1 : isTablet ? 2 : 3}
+                bordered
+                size="middle"
                 layout={isMobile ? 'vertical' : 'horizontal'}
                 className="w-full"
               >
@@ -112,7 +112,7 @@ const RecipeDetail: React.FC = () => {
                     {data.recipe.recipeStatus || '-'}
                   </Tag>
                 </Descriptions.Item>
-                
+
                 {/* Hàng 3 */}
                 <Descriptions.Item label={<Text strong>Recipe ID</Text>}>{data.recipe.recipeDetailsId || '-'}</Descriptions.Item>
                 <Descriptions.Item label={<Text strong>Số quy trình</Text>}>{(data.processes || []).length} bước</Descriptions.Item>
@@ -229,11 +229,11 @@ const RecipeDetail: React.FC = () => {
         </>
       )}
 
-      <Modal 
-        title="Chi tiết sản phẩm" 
-        isOpen={isProductModalOpen} 
-        onClose={() => setIsProductModalOpen(false)} 
-        width={isMobile ? '100%' : 800} 
+      <Modal
+        title="Chi tiết sản phẩm"
+        isOpen={isProductModalOpen}
+        onClose={() => setIsProductModalOpen(false)}
+        width={isMobile ? '100%' : 800}
         hideFooter
       >
         {productLoading ? (

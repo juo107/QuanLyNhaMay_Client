@@ -1,6 +1,5 @@
-import React from 'react';
-import { Tag, Button, Tooltip } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
+import { Button, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import type { IProduct } from '../../types/product';
 
@@ -49,10 +48,10 @@ export const getProductColumns = (openDetailModal: (record: IProduct) => void) =
     key: 'actions',
     render: (_: unknown, record: IProduct) => (
       <Tooltip title="Xem chi tiết">
-        <Button 
-          type="text" 
-          icon={<EyeOutlined style={{ color: '#5b4ce8', fontSize: '18px' }} />} 
-          onClick={() => openDetailModal(record)} 
+        <Button
+          type="text"
+          icon={<EyeOutlined style={{ color: '#5b4ce8', fontSize: '18px' }} />}
+          onClick={() => openDetailModal(record)}
         />
       </Tooltip>
     ),

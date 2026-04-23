@@ -1,5 +1,5 @@
+import type { IRecipeSearchParams, IRecipeStats } from '../types/recipeTypes';
 import axiosClient from './axiosClient';
-import type { IRecipe, IRecipeSearchParams, IRecipeStats } from '../types/recipeTypes';
 
 export const recipeApi = {
   async getStats(params?: IRecipeSearchParams): Promise<IRecipeStats> {

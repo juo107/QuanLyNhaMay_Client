@@ -16,7 +16,7 @@ export const calculatePlanQuantity = (
 
   const batchQty = batch ? parseFloat(batch.quantity as any) || 0 : 0;
   const recipeQty = ingredientsTotals[ingCode]?.total || 0;
-  
+
   // Mấu chốt: Sử dụng ProductQuantity (Base của Recipe) làm số chia nếu có, 
   // nếu không mới dùng orderQuantity (Tổng của PO)
   const poQty = (productQuantity && productQuantity > 0) ? productQuantity : (orderQuantity || 1);
@@ -61,9 +61,9 @@ export const groupMaterialsLogic = (
     } else {
       const items = [material];
       groupMap.set(key, {
-        batchCode: material.batchCode, 
+        batchCode: material.batchCode,
         ingredientCode: material.ingredientCode,
-        lot: material.lot, 
+        lot: material.lot,
         unitOfMeasurement: material.unitOfMeasurement,
         totalQuantity: parseFloat(material.quantity as any) || 0,
         totalPlanQuantity: 0,
@@ -98,17 +98,17 @@ export const groupMaterialsLogic = (
     const ingCodeOnly = group.ingredientCode ? group.ingredientCode.split(' - ')[0].trim() : '';
     const recipeQuantity = ingredientsTotals[ingCodeOnly]?.total || 0;
     // Sử dụng ProductQuantity (Base của Recipe) nếu có, nếu không mới dùng orderQuantity (Tổng của PO)
-    const poQuantity = (productQuantity && parseFloat(productQuantity as any) > 0) 
-      ? parseFloat(productQuantity as any) 
+    const poQuantity = (productQuantity && parseFloat(productQuantity as any) > 0)
+      ? parseFloat(productQuantity as any)
       : (parseFloat(orderQuantity as any) || 1);
-    
+
     let finalPlanQ = 0;
     for (const item of group.items) {
       const batch = batches.find(b => b.batchNumber === item.batchCode);
       const batchQuantity = batch ? parseFloat(batch.quantity as any) || 0 : 0;
       if (recipeQuantity > 0 && batchQuantity > 0) {
         finalPlanQ = (recipeQuantity / poQuantity) * batchQuantity;
-        break; 
+        break;
       }
     }
     group.totalPlanQuantity = finalPlanQ;
@@ -133,10 +133,10 @@ export const groupMaterialsLogic = (
     } else {
       group.lot = uniqueLots.join(", ");
     }
-    
+
     // Cập nhật lại response cho nhóm sau khi sắp xếp
     group.response = getGroupResponse(group.items);
-    
+
     // Cập nhật lại ngày tháng mới nhất
     const dates = group.items.map((it: any) => it.datetime).filter(Boolean);
     if (dates.length > 0) {

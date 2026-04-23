@@ -44,24 +44,24 @@ export const CardCommon: React.FC<ICardCommonProps> = ({
   totalBatch = 0
 }) => {
   return (
-    <Card 
-      hoverable 
+    <Card
+      hoverable
       className="shadow-sm rounded-xl overflow-hidden border-gray-100"
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
       bodyStyle={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}
     >
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
-        <div 
+        <div
           onClick={onTitleClick}
           className="cursor-pointer text-gray-900 hover:text-blue-600 m-0 text-[15px] font-bold tracking-tight"
         >
           {title}
         </div>
-        <Tag 
-          icon={statusIcon} 
+        <Tag
+          icon={statusIcon}
           className="m-0 border-none px-3 py-1 flex items-center gap-1 rounded-full text-white font-medium shadow-sm"
-          style={{ 
+          style={{
             background: statusColor === 'orange' ? 'linear-gradient(90deg, #FF8C00 0%, #FFA500 100%)' : statusColor,
           }}
         >
@@ -97,14 +97,14 @@ export const CardCommon: React.FC<ICardCommonProps> = ({
         <div className="text-gray-700 font-bold text-[12px] tracking-wide mb-2">
           Tiến độ
         </div>
-        <Progress 
-          percent={progress} 
-          size="small" 
-          strokeColor="#5b4ce8" 
+        <Progress
+          percent={progress}
+          size="small"
+          strokeColor="#5b4ce8"
           trailColor="#f0f0f0"
           format={(percent) => (
             <span className="text-[12px] text-gray-500 font-medium">
-              {Math.round(percent || 0)}% 
+              {Math.round(percent || 0)}%
               <span className="text-gray-400 font-normal ml-1">({currentBatch}/{totalBatch})</span>
             </span>
           )}
@@ -113,9 +113,9 @@ export const CardCommon: React.FC<ICardCommonProps> = ({
 
       {/* Footer Action */}
       <div className="mt-auto">
-        <Button 
-          type="primary" 
-          block 
+        <Button
+          type="primary"
+          block
           className="h-[42px] bg-[#5b4ce8] border-none rounded-lg font-medium text-[15px] flex items-center justify-center hover:bg-[#4a3bc7]"
           onClick={onActionClick}
         >

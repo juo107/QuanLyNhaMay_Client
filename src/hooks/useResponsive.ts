@@ -24,7 +24,7 @@ export const useResponsive = () => {
   return {
     // Trả về đối tượng raw screens của Ant Design { xs, sm, md, lg, xl, xxl }
     screens,
-    
+
     // Trả về cờ tiện lợi
     isMobile,
     isTablet,

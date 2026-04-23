@@ -116,10 +116,10 @@ const ProductionOrderDetail: React.FC = () => {
         {/* Expandable Info Grid */}
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isHeaderExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="p-6 bg-gray-50/30 overflow-x-auto">
-            <Descriptions 
-              bordered 
-              column={isMobile ? 1 : isTablet ? 2 : 3} 
-              size="middle" 
+            <Descriptions
+              bordered
+              column={isMobile ? 1 : isTablet ? 2 : 3}
+              size="middle"
               className={`bg-white rounded-lg shadow-sm ${isMobile ? 'w-full' : 'min-w-[800px]'}`}
               styles={{ label: { fontWeight: 'bold', color: '#6b7280', width: '140px' }, content: { color: '#374151', fontWeight: '500' } }}
             >

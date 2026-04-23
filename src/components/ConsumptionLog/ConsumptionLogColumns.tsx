@@ -1,9 +1,8 @@
-import React from 'react';
-import { Tag, Typography, Tooltip, Button } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined } from '@ant-design/icons';
+import { Button, Tag, Tooltip, Typography } from 'antd';
 import dayjs from 'dayjs';
-import { formatUnit } from '../../utils/format';
 import type { IConsumptionRecord } from '../../types/consumption';
+import { formatUnit } from '../../utils/format';
 
 const { Text } = Typography;
 
@@ -104,10 +103,10 @@ export const getConsumptionLogColumns = (showDetail: (record: IConsumptionRecord
     width: 80,
     render: (_: any, record: IConsumptionRecord) => (
       <Tooltip title="Xem chi tiết">
-        <Button 
-          type="text" 
-          icon={<EyeOutlined style={{ color: '#5b4ce8', fontSize: '18px' }} />} 
-          onClick={() => showDetail(record)} 
+        <Button
+          type="text"
+          icon={<EyeOutlined style={{ color: '#5b4ce8', fontSize: '18px' }} />}
+          onClick={() => showDetail(record)}
         />
       </Tooltip>
     ),

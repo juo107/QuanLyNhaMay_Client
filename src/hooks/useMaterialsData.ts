@@ -10,8 +10,8 @@ import {
 import type { IBatch, IProductionOrder } from '../types/productionOrderTypes';
 
 export const useMaterialsData = (
-  order: IProductionOrder, 
-  batches: IBatch[], 
+  order: IProductionOrder,
+  batches: IBatch[],
   batchFilter?: string | null,
   onChangeBatchFilter?: (code: string | null) => void
 ) => {

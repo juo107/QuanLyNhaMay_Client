@@ -29,8 +29,13 @@
 }
 
 /* Custom width for specific rows if needed */
-.production-detail-table .w-25 { width: 25%; }
-.production-detail-table .w-15 { width: 15%; }
+.production-detail-table .w-25 {
+  width: 25%;
+}
+
+.production-detail-table .w-15 {
+  width: 15%;
+}
 
 .modal-header-container {
   display: flex;

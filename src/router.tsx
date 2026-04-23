@@ -21,7 +21,7 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   beforeLoad: () => {
-    throw redirect({ 
+    throw redirect({
       to: '/production-orders',
       search: { page: 1, limit: 20 }
     });

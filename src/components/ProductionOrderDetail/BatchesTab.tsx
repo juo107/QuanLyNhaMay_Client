@@ -13,6 +13,14 @@ interface BatchesTabProps {
 const BatchesTab: React.FC<BatchesTabProps> = ({ batches, loading, onViewMaterials }) => {
   const columns = [
     {
+      title: 'ID',
+      dataIndex: 'batchId',
+      key: 'batchId',
+      align: 'center' as const,
+      width: 100,
+      render: (id: number) => <span className="font-bold text-gray-700">{id > 0 ? id : '-'}</span>
+    },
+    {
       title: 'Mã Lô (Batch Number)',
       dataIndex: 'batchNumber',
       key: 'batchNumber',
@@ -41,10 +49,9 @@ const BatchesTab: React.FC<BatchesTabProps> = ({ batches, loading, onViewMateria
       align: 'center' as const,
       width: 150,
       render: (status: number, record: IBatch) => {
-        if (record.batchId === -2) return <Tag color="error" className="rounded-full px-4">Đang chạy</Tag>;
+        if (record.batchId === -2) return <Tag color="blue" className="rounded-full px-4">Đang chạy</Tag>;
         if (status === 0) return <Tag color="warning" className="rounded-full px-4">Đang chờ</Tag>;
-        if (status === 1) return <Tag color="blue" className="rounded-full px-4">Đang chạy</Tag>;
-        if (status === 2) return <Tag color="success" className="rounded-full px-4">Hoàn thành</Tag>;
+        if (status === 1 || status === 2) return <Tag color="blue" className="rounded-full px-4">Đang chạy</Tag>;
         if (status === -1) return <Tag color="error" className="rounded-full px-4">Đã hủy</Tag>;
         return <Tag className="rounded-full px-4">{status}</Tag>;
       },

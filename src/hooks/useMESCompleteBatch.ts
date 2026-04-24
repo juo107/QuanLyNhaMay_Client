@@ -1,20 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useCallback, useMemo } from 'react';
-import { mesCompleteBatchApi } from '../api/mesCompleteBatchApi';
+import { useMemo } from 'react';
 import type { IMESCompleteBatchParams } from '../api/mesCompleteBatchApi';
+import { mesCompleteBatchApi } from '../api/mesCompleteBatchApi';
 import type { FilterItem } from '../components/FilterSearchBar';
+import { useTableFilters } from './useTableFilters';
 
 export const useMESCompleteBatch = () => {
   const params = useSearch({ from: '/mes-complete-batch' });
   const navigate = useNavigate({ from: '/mes-complete-batch' });
-
-  const setParams = useCallback((updater: (prev: any) => any) => {
-    navigate({
-      search: (prev) => updater(prev),
-      replace: true,
-    });
-  }, [navigate]);
 
   const { data, isLoading: loading, refetch: fetchData } = useQuery({
     queryKey: ['mesCompleteBatch', params],
@@ -34,17 +28,11 @@ export const useMESCompleteBatch = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  const onFilterChange = useCallback((key: string, value: any) => {
-    setParams(prev => ({ ...prev, [key]: value || undefined, page: 1 }));
-  }, [setParams]);
-
-  const onPageChange = useCallback((page: number, pageSize: number) => {
-    setParams(prev => ({ ...prev, page, limit: pageSize }));
-  }, [setParams]);
+  const { onFilterChange, onPageChange } = useTableFilters(navigate);
 
   // Helper function for natural sorting (handles strings with numbers correctly)
   const naturalSort = (a: string, b: string) => {
-    return b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' });
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
   };
 
   const filterConfig: FilterItem[] = useMemo(() => [
@@ -86,9 +74,7 @@ export const useMESCompleteBatch = () => {
       minWidth: 160,
       options: [
         { value: 'Sent', label: 'Đã gửi (Sent)' },
-        { value: 'Success', label: 'Thành công' },
-        { value: 'Pending', label: 'Đang chờ' },
-        { value: 'Error', label: 'Lỗi (Error)' },
+        { value: 'Failed', label: 'Chưa gửi (Failed)' },
       ],
     },
   ], [batchNumbers, machineCodes]);

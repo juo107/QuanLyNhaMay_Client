@@ -1,18 +1,20 @@
 import {
   AppstoreOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
-  FileTextOutlined,
+  CloseCircleOutlined,
   PlayCircleOutlined,
+  StopOutlined,
   UnorderedListOutlined
 } from '@ant-design/icons';
-import { Table as AntdTable, Button, Card, Col, Pagination, Radio, Row, Statistic, Tag, Typography } from 'antd';
+import { Table as AntdTable, Button, Card, Col, Pagination, Radio, Row, Tag, Typography } from 'antd';
+import { useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useMemo } from 'react';
 import CardCommon from '../components/CardCommon';
 import FilterSearchBar from '../components/FilterSearchBar';
 import Modal from '../components/Modal';
 import { getProductionOrderColumns } from '../components/ProductionOrder/ProductionOrderColumns';
+import StatCard from '../components/StatCard';
 import Table from '../components/Table';
 import { useProductionOrders } from '../hooks/useProductionOrders';
 import { useResponsive } from '../hooks/useResponsive';
@@ -36,12 +38,18 @@ const ProductionOrders: React.FC = () => {
     selectedOrder,
     batches,
     batchLoading,
-    fetchData,
     onFilterChange,
     onPageChange,
     showDetail,
     filterConfig,
   } = useProductionOrders();
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    // Invalidate queries to force a fresh fetch from server (bypassing cache)
+    await queryClient.invalidateQueries({ queryKey: ['productionOrders'] });
+    await queryClient.invalidateQueries({ queryKey: ['productionOrdersStats'] });
+  };
 
   const columns = useMemo(() => getProductionOrderColumns(showDetail), [showDetail]);
 
@@ -57,7 +65,6 @@ const ProductionOrders: React.FC = () => {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-semibold mb-1">Lệnh Sản Xuất</h2>
-          <p className="text-gray-500 text-sm">Quản lý và giám sát chi tiết lệnh sản xuất theo PO</p>
         </div>
         <Radio.Group
           value={viewMode}
@@ -71,26 +78,42 @@ const ProductionOrders: React.FC = () => {
         </Radio.Group>
       </div>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Tổng Lệnh SX" value={stats.total} styles={{ content: { color: '#1677ff' } }} prefix={<FileTextOutlined />} />
-          </Card>
+      <Row gutter={[20, 20]}>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Tổng Lệnh SX (PO)"
+            value={stats.total}
+            icon={<AppstoreOutlined />}
+            color="#1677ff"
+            subText="Tổng số lệnh trong hệ thống"
+          />
         </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Đang Chạy" value={stats.inProgress} styles={{ content: { color: '#fa8c16' } }} prefix={<PlayCircleOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Bình thường"
+            value={stats.inProgress}
+            icon={<PlayCircleOutlined />}
+            color="#fa8c16"
+            subText="Lệnh đang hoạt động"
+          />
         </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Hoàn Thành" value={stats.completed} styles={{ content: { color: '#3f8600' } }} prefix={<CheckCircleOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Hoàn thành"
+            value={stats.completed}
+            icon={<CheckCircleOutlined />}
+            color="#52c41a"
+            subText="Lệnh đã hoàn thành"
+          />
         </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Đang Chờ" value={stats.stopped} styles={{ content: { color: '#1677ff' } }} prefix={<ClockCircleOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Đã hủy"
+            value={stats.stopped}
+            icon={<StopOutlined />}
+            color="#1677ff"
+            subText="Lệnh đã bị hủy bỏ"
+          />
         </Col>
       </Row>
 
@@ -99,7 +122,7 @@ const ProductionOrders: React.FC = () => {
           filters={filterConfig}
           values={params as Record<string, any>}
           onChange={onFilterChange}
-          onRefresh={() => fetchData()}
+          onRefresh={handleRefresh}
         />
 
         {loading ? (
@@ -125,10 +148,10 @@ const ProductionOrders: React.FC = () => {
           <>
             <Row gutter={[20, 20]} className="mt-6 flex flex-wrap">
               {data.map((record: IProductionOrder) => {
-                const isRunning = record.status === 1;
-                const statusText = isRunning ? 'Đang chạy' : 'Đang chờ';
-                const statusColor = isRunning ? 'orange' : '#1677ff';
-                const statusIcon = isRunning ? <PlayCircleOutlined /> : <ClockCircleOutlined />;
+                const isCancelled = record.status === -1;
+                const statusText = isCancelled ? 'Đã hủy' : 'Bình thường';
+                const statusColor = isCancelled ? '#ff4d4f' : '#52c41a';
+                const statusIcon = isCancelled ? <CloseCircleOutlined /> : <CheckCircleOutlined />;
 
                 return (
                   <Col xs={24} sm={12} md={12} lg={8} xl={6} key={record.productionOrderId} style={{ display: 'flex' }}>
@@ -210,7 +233,7 @@ const ProductionOrders: React.FC = () => {
                 {infoItem('Lô SX', selectedOrder.lotNumber)}
                 {infoItem('Đơn vị', formatUnit(selectedOrder.unitOfMeasurement))}
                 {infoItem('Ngày kết thúc', selectedOrder.plannedEnd ? dayjs(selectedOrder.plannedEnd).format('DD/MM/YYYY') : '-')}
-                {infoItem('Trạng thái', selectedOrder.status === 1 ? 'Đang chạy' : (selectedOrder.status === 2 ? 'Hoàn thành' : 'Bình thường'))}
+                {infoItem('Trạng thái', selectedOrder.status === -1 ? 'Đang chạy' : 'Đang chờ')}
                 {infoItem('Process Area', selectedOrder.processArea)}
               </Col>
             </Row>

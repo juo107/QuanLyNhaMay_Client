@@ -1,6 +1,6 @@
-import { EyeOutlined } from '@ant-design/icons';
-import { Button, Tag, Tooltip } from 'antd';
 import dayjs from 'dayjs';
+import { Button, Tag, Tooltip } from 'antd';
+import { EyeOutlined } from '@ant-design/icons';
 import type { IGroupedMaterial } from '../../types/productionOrderTypes';
 
 interface GetColumnsProps {
@@ -25,10 +25,9 @@ export const getMaterialsTableColumns = ({ onView }: GetColumnsProps) => [
     key: 'batchCode',
     width: 160,
     render: (text: string) => {
-      if (!text || text === '-') return <span className="text-gray-300 italic">-</span>;
+      if (!text || text === 'N/A' || text === '-') return <span className="text-gray-300 italic">-</span>;
       const batches = text.split(',').map(b => b.trim());
 
-      // Nếu số lượng Batch ít (<= 5) thì hiện ra hết cho đẹp
       if (batches.length <= 5) {
         return (
           <div className="flex flex-wrap gap-1">
@@ -66,20 +65,24 @@ export const getMaterialsTableColumns = ({ onView }: GetColumnsProps) => [
   },
   {
     title: 'Nguyên vật liệu',
-    dataIndex: 'ingredientCode',
-    key: 'ingredientCode',
+    key: 'materialInfo',
     width: 400,
-    render: (text: string) => (
-      <span className="text-[15px] font-medium text-gray-800 leading-relaxed block whitespace-normal">
-        {text}
-      </span>
+    render: (_: any, record: IGroupedMaterial) => (
+      <div className="flex flex-col whitespace-normal">
+        <span className="text-[15px] font-bold text-gray-800 leading-tight">
+          {record.ingredientCode}
+        </span>
+        <span className="text-[12px] text-gray-500 font-medium mt-1 leading-snug">
+          {record.itemName || '-'}
+        </span>
+      </div>
     ),
   },
   {
     title: 'Lot',
     dataIndex: 'lot',
     key: 'lot',
-    width: 100,
+    width: 120,
     align: 'center' as const,
     render: (text: string) => text ? <span className="text-xs text-gray-600 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">{text}</span> : <span className="text-gray-300">-</span>,
   },
@@ -89,14 +92,19 @@ export const getMaterialsTableColumns = ({ onView }: GetColumnsProps) => [
     align: 'right' as const,
     width: 140,
     sorter: (a: IGroupedMaterial, b: IGroupedMaterial) => a.totalPlanQuantity - b.totalPlanQuantity,
-    render: (_: any, record: IGroupedMaterial) => (
-      <div className="flex justify-end items-center gap-1.5">
-        <span className="text-[13px] text-gray-800 font-medium">
-          {record.totalPlanQuantity <= 0 ? 'N/A' : record.totalPlanQuantity.toFixed(2)}
-        </span>
-        <span className="text-[10px] text-gray-700 uppercase font-bold">{record.unitOfMeasurement}</span>
-      </div>
-    ),
+    render: (_: any, record: IGroupedMaterial) => {
+      const hasPlan = (record as any).hasPlanData;
+      return (
+        <div className="flex justify-end items-center gap-1.5">
+          <span className={`text-[13px] font-medium ${hasPlan ? 'text-gray-800' : 'text-gray-300'}`}>
+            {hasPlan ? record.totalPlanQuantity.toFixed(2) : 'N/A'}
+          </span>
+          <span className={`text-[10px] uppercase font-bold ${hasPlan ? 'text-gray-700' : 'text-gray-300'}`}>
+            {record.unitOfMeasurement}
+          </span>
+        </div>
+      );
+    },
   },
   {
     title: 'Actual Qty',
@@ -104,16 +112,19 @@ export const getMaterialsTableColumns = ({ onView }: GetColumnsProps) => [
     align: 'right' as const,
     width: 140,
     sorter: (a: IGroupedMaterial, b: IGroupedMaterial) => a.totalQuantity - b.totalQuantity,
-    render: (_: any, record: IGroupedMaterial) => (
-      <div className="flex justify-end items-center gap-1.5">
-        <span className={`text-[13px] font-bold ${record.totalQuantity > 0 ? 'text-gray-800' : 'text-gray-300'}`}>
-          {record.totalQuantity <= 0 ? 'N/A' : record.totalQuantity.toFixed(2)}
-        </span>
-        <span className={`text-[10px] uppercase font-bold ${record.totalQuantity > 0 ? 'text-gray-700' : 'text-gray-400'}`}>
-          {record.unitOfMeasurement}
-        </span>
-      </div>
-    ),
+    render: (_: any, record: IGroupedMaterial) => {
+      const hasActual = (record as any).hasActualData;
+      return (
+        <div className="flex justify-end items-center gap-1.5">
+          <span className={`text-[13px] font-bold ${hasActual ? 'text-gray-800' : 'text-gray-300'}`}>
+            {hasActual ? record.totalQuantity.toFixed(2) : 'N/A'}
+          </span>
+          <span className={`text-[10px] uppercase font-bold ${hasActual ? 'text-gray-700' : 'text-gray-300'}`}>
+            {record.unitOfMeasurement}
+          </span>
+        </div>
+      );
+    },
   },
   {
     title: 'Last Date',
@@ -130,14 +141,26 @@ export const getMaterialsTableColumns = ({ onView }: GetColumnsProps) => [
   },
   {
     title: 'Status',
-    key: 'response',
+    key: 'respone',
     width: 110,
     align: 'center' as const,
     render: (_: any, record: IGroupedMaterial) => {
-      const status = record.response;
-      if (status === 'Success') return <span className="text-green-600 font-medium">Success</span>;
-      if (status === 'Failed') return <span className="text-red-600 font-medium">Failed</span>;
-      return <span className="text-gray-300">-</span>;
+      const status = record.respone;
+      if (!status) return <span className="text-gray-300">-</span>;
+      
+      const isSuccess = status === 'Success';
+      const isFailed = status === 'Failed';
+      
+      if (isSuccess) return <span className="text-green-600 font-medium">Success</span>;
+      if (isFailed) return <span className="text-red-600 font-medium">Failed</span>;
+      
+      return (
+        <Tooltip title={status}>
+          <span className="text-orange-500 font-medium truncate max-w-[100px] block">
+            {status}
+          </span>
+        </Tooltip>
+      );
     }
   },
   {

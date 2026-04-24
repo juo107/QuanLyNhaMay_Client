@@ -2,15 +2,15 @@ import {
   BarChartOutlined,
   ContainerOutlined,
   ExperimentOutlined,
-  FileTextOutlined,
+  FileDoneOutlined,
   HistoryOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  OrderedListOutlined,
-  FileDoneOutlined
+  OrderedListOutlined
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Button, Drawer, Layout, Menu, theme, Typography } from 'antd';
+import dayjs from 'dayjs';
 import React, { useState } from 'react';
 import logo from '../assets/Logo_bieu tuong kem ten.png';
 import { useResponsive } from '../hooks/useResponsive';
@@ -42,8 +42,24 @@ const AdminLayout: React.FC = () => {
   const siderWidth = collapsed ? 80 : 220
 
   const handleMenuClick = ({ key }: { key: string }) => {
-    navigate({ to: key })
-    if (isMobile) setMobileOpen(false) // đóng drawer sau khi chọn menu
+    const today = dayjs()
+    const dateParams = {
+      dateFrom: today.startOf('day').format('YYYY-MM-DD HH:mm:ss'),
+      dateTo: today.endOf('day').format('YYYY-MM-DD HH:mm:ss'),
+      page: 1,
+      limit: 20
+    }
+
+    // Các trang cần mặc định ngày hôm nay
+    const dateRequiredPages = ['/production-status', '/production-orders', '/consumption-log', '/mes-complete-batch']
+
+    if (dateRequiredPages.includes(key)) {
+      navigate({ to: key, search: (prev: any) => ({ ...prev, ...dateParams }) })
+    } else {
+      navigate({ to: key })
+    }
+
+    if (isMobile) setMobileOpen(false)
   }
 
   const MenuContent = (

@@ -1,22 +1,23 @@
-import React, { useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { Card, Row, Col, Statistic, Button, Tag, Typography, Radio, Pagination, Empty, Modal } from 'antd';
 import {
+  AppstoreOutlined,
+  ClockCircleOutlined,
   FileTextOutlined,
   PlayCircleOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  AppstoreOutlined,
   UnorderedListOutlined
 } from '@ant-design/icons';
+import { useNavigate } from '@tanstack/react-router';
+import { Button, Card, Col, Empty, Modal, Pagination, Radio, Row, Tag, Typography } from 'antd';
+import { useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import Table from '../components/Table';
-import FilterSearchBar from '../components/FilterSearchBar';
+import React, { useMemo } from 'react';
 import CardCommon from '../components/CardCommon';
+import FilterSearchBar from '../components/FilterSearchBar';
+import ProductionOrderDetailTable from '../components/ProductionStatus/ProductionOrderDetailTable';
+import { getProductionStatusColumns } from '../components/ProductionStatus/ProductionStatusColumns';
+import StatCard from '../components/StatCard';
+import Table from '../components/Table';
 import { useProductionStatus } from '../hooks/useProductionStatus';
 import { useResponsive } from '../hooks/useResponsive';
-import { getProductionStatusColumns } from '../components/ProductionStatus/ProductionStatusColumns';
-import ProductionOrderDetailTable from '../components/ProductionStatus/ProductionOrderDetailTable';
 import type { IProductionOrder } from '../types/productionOrderTypes';
 import './ProductionStatus.css';
 
@@ -40,8 +41,14 @@ const ProductionStatus: React.FC = () => {
     onFilterChange,
     onPageChange,
     filterConfig,
-    fetchData,
   } = useProductionStatus();
+
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['productionStatus'] });
+    await queryClient.invalidateQueries({ queryKey: ['productionStatusStats'] });
+  };
 
   const onShowDetail = (record: IProductionOrder) => {
     setSelectedOrder(record);
@@ -55,7 +62,6 @@ const ProductionStatus: React.FC = () => {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-semibold mb-1">Trạng Thái Sản Xuất</h2>
-          <p className="text-gray-500 text-sm">Tổng quan thời gian thực các lệnh sản xuất</p>
         </div>
         <Radio.Group
           value={viewMode}
@@ -69,26 +75,33 @@ const ProductionStatus: React.FC = () => {
         </Radio.Group>
       </div>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Tổng Lệnh SX" value={stats.Total} styles={{ content: { color: '#1677ff' } }} prefix={<FileTextOutlined />} />
-          </Card>
+      <Row gutter={[20, 20]}>
+        <Col xs={24} sm={12} lg={8}>
+          <StatCard
+            title="Tổng Lệnh SX"
+            value={stats.Total}
+            icon={<FileTextOutlined />}
+            color="#1677ff"
+            subText="Tổng số lệnh ghi nhận"
+          />
         </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Đang Chạy" value={stats.InProgress} styles={{ content: { color: '#fa8c16' } }} prefix={<PlayCircleOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={8}>
+          <StatCard
+            title="Đang Chạy"
+            value={stats.InProgress}
+            icon={<PlayCircleOutlined />}
+            color="#fa8c16"
+            subText="Lệnh đang hoạt động"
+          />
         </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Hoàn Thành" value={stats.Completed} styles={{ content: { color: '#3f8600' } }} prefix={<CheckCircleOutlined />} />
-          </Card>
-        </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Đang Chờ" value={stats.Stopped} styles={{ content: { color: '#1677ff' } }} prefix={<ClockCircleOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={8}>
+          <StatCard
+            title="Đang Chờ"
+            value={stats.Stopped}
+            icon={<ClockCircleOutlined />}
+            color="#1890ff"
+            subText="Lệnh trong hàng đợi"
+          />
         </Col>
       </Row>
 
@@ -97,7 +110,7 @@ const ProductionStatus: React.FC = () => {
           filters={filterConfig}
           values={params as Record<string, any>}
           onChange={onFilterChange}
-          onRefresh={() => fetchData()}
+          onRefresh={handleRefresh}
         />
 
         {loading ? (
@@ -125,7 +138,7 @@ const ProductionStatus: React.FC = () => {
               {data.map((record: IProductionOrder) => {
                 const isRunning = record.status === 1;
                 const statusText = isRunning ? 'Đang chạy' : 'Đang chờ';
-                const statusColor = isRunning ? 'orange' : '#1677ff';
+                const statusColor = isRunning ? '#fa8c16' : '#1677ff';
                 const statusIcon = isRunning ? <PlayCircleOutlined /> : <ClockCircleOutlined />;
 
                 return (

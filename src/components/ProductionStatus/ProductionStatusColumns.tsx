@@ -95,16 +95,24 @@ export const getProductionStatusColumns = (
       align: 'center' as const,
       width: 150,
       sorter: (a: IProductionOrder, b: IProductionOrder) => {
-        const aCurrent = typeof a.currentBatch === 'string' ? parseInt(a.currentBatch) || 0 : (a.currentBatch || 0);
-        const bCurrent = typeof b.currentBatch === 'string' ? parseInt(b.currentBatch) || 0 : (b.currentBatch || 0);
-        const aPercent = (a.totalBatches || 0) > 0 ? (aCurrent / (a.totalBatches || 1)) : 0;
-        const bPercent = (b.totalBatches || 0) > 0 ? (bCurrent / (b.totalBatches || 1)) : 0;
+        const aCurrent = (typeof a.currentBatch === 'string' ? parseInt(a.currentBatch) : (a.currentBatch)) ?? -1;
+        const bCurrent = (typeof b.currentBatch === 'string' ? parseInt(b.currentBatch) : (b.currentBatch)) ?? -1;
+        const aTotalActual = (a.totalBatches || 0) + 1;
+        const bTotalActual = (b.totalBatches || 0) + 1;
+        const aPercent = aTotalActual > 0 ? ((aCurrent + 1) / aTotalActual) : 0;
+        const bPercent = bTotalActual > 0 ? ((bCurrent + 1) / bTotalActual) : 0;
         return aPercent - bPercent;
       },
       render: (_: any, record: IProductionOrder) => {
-        const current = typeof record.currentBatch === 'string' ? parseInt(record.currentBatch) || 0 : (record.currentBatch || 0);
-        const totalB = record.totalBatches || 0;
-        const percent = totalB > 0 ? (current / totalB) * 100 : 0;
+        const currentRaw = (typeof record.currentBatch === 'string' ? parseInt(record.currentBatch) : (record.currentBatch)) ?? -1;
+        const totalCount = record.totalBatches || 0;
+        
+        // Tính thêm Batch 0 là 1 batch thực thụ
+        const actualTotal = totalCount + 1;
+        // Chuyển từ index 0 sang số thứ tự 1 (Batch 0 là mẻ thứ 1)
+        const currentDisplay = currentRaw >= 0 ? currentRaw + 1 : 0;
+        const percent = actualTotal > 0 ? (currentDisplay / actualTotal) * 100 : 0;
+        
         return (
           <div className="flex flex-col items-center py-1">
             <Progress
@@ -115,7 +123,7 @@ export const getProductionStatusColumns = (
               className="mb-1 !w-[80px]"
             />
             <span className="text-[11px] text-gray-500 font-bold">
-              {current}/{totalB} <span className="font-normal text-gray-400">batches</span>
+              {currentDisplay}/{actualTotal} <span className="font-normal text-gray-400">batches</span>
             </span>
           </div>
         );

@@ -1,14 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { productionOrderApi } from '../api/productionOrderApi';
 import type { FilterItem } from '../components/FilterSearchBar';
 import type { IProductionOrder } from '../types/productionOrderTypes';
+import { useTableFilters } from './useTableFilters';
 
 export const useProductionOrders = () => {
   // 1. Quản lý trạng thái URL thông qua TanStack Router
   const params = useSearch({ from: '/production-orders' });
   const navigate = useNavigate({ from: '/production-orders' });
+  const { onFilterChange, onPageChange } = useTableFilters(navigate);
 
   // 2. Các trạng thái giao diện nội bộ
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
@@ -16,20 +18,16 @@ export const useProductionOrders = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<IProductionOrder | null>(null);
 
-  // Helper cập nhật Search Params lên URL
-  const setParams = useCallback((updater: (prev: any) => any) => {
-    navigate({
-      search: (prev) => updater(prev),
-      replace: true,
-    });
-  }, [navigate]);
-
   // Query: Lấy danh sách Lệnh Sản Xuất dựa trên bộ lọc URL
   const { data: orderData, isLoading: loading, refetch: fetchData } = useQuery({
     queryKey: ['productionOrders', params],
     queryFn: async () => {
+      const p = params as Record<string, any>;
       const finalParams = {
         ...params,
+        statuses: Array.isArray(p.statuses) ? p.statuses.join(',') : p.statuses,
+        processAreas: Array.isArray(p.processAreas) ? p.processAreas.join(',') : p.processAreas,
+        shifts: Array.isArray(p.shifts) ? p.shifts.join(',') : p.shifts,
       };
       const res: any = await productionOrderApi.search(finalParams);
       const items = res.items ?? res.Items ?? res.data?.items ?? res.data?.Items ?? (Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []));
@@ -42,8 +40,12 @@ export const useProductionOrders = () => {
   const { data: stats = { total: 0, inProgress: 0, completed: 0, stopped: 0 } } = useQuery({
     queryKey: ['productionOrdersStats', params],
     queryFn: async () => {
+      const p = params as Record<string, any>;
       const finalParams = {
         ...params,
+        statuses: Array.isArray(p.statuses) ? p.statuses.join(',') : p.statuses,
+        processAreas: Array.isArray(p.processAreas) ? p.processAreas.join(',') : p.processAreas,
+        shifts: Array.isArray(p.shifts) ? p.shifts.join(',') : p.shifts,
       };
       const res: any = await productionOrderApi.getStats(finalParams);
       const s = res.data ?? res;
@@ -56,15 +58,16 @@ export const useProductionOrders = () => {
     },
   });
 
-  // Query: Lấy dữ liệu danh sách lọc (Process Area, Shifts) từ API
-  const { data: filters = { processAreas: [], shifts: [] } } = useQuery({
+  // Query: Lấy dữ liệu danh sách lọc (Process Area, Shifts, Statuses) từ API
+  const { data: filters = { processAreas: [], shifts: [], statuses: [] } } = useQuery({
     queryKey: ['productionFilters'],
     queryFn: async () => {
       const res: any = await productionOrderApi.getFilters();
       const d = res?.data ?? res;
       return {
         processAreas: d?.processAreas ?? d?.ProcessAreas ?? [],
-        shifts: d?.shifts ?? d?.Shifts ?? []
+        shifts: d?.shifts ?? d?.Shifts ?? [],
+        statuses: d?.statuses ?? d?.Statuses ?? []
       };
     },
     staleTime: 60 * 60 * 1000, // 1 hour
@@ -81,25 +84,24 @@ export const useProductionOrders = () => {
     enabled: isModalOpen && !!selectedOrder?.productionOrderId,
   });
 
-  // Xử lý thay đổi bộ lọc từ giao diện
-  const onFilterChange = (key: string, value: any) => {
-    setParams(prev => ({ ...prev, [key]: value || undefined, page: 1 }));
-  };
-
-  // Xử lý thay đổi trang và giới hạn hiển thị
-  const onPageChange = (page: number, pageSize: number) => {
-    setParams(prev => ({ ...prev, page, limit: pageSize }));
-  };
-
   // Xử lý tìm kiếm theo mã PO
   const onPoSearch = (val: string) => {
-    setParams(prev => ({ ...prev, pos: val || undefined, page: 1 }));
+    onFilterChange('pos', val);
   };
 
-  // Hiển thị Modal chi tiết cho một lệnh sản xuất
+  // Mở Modal chi tiết cho một lệnh sản xuất
   const showDetail = (record: IProductionOrder) => {
     setSelectedOrder(record);
     setIsModalOpen(true);
+  };
+
+  // Ánh xạ nhãn trạng thái từ mã số
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case '1': return 'Bình thường';
+      case '-1': return 'Đã hủy';
+      default: return `Trạng thái ${status}`;
+    }
   };
 
   // Cấu hình các trường lọc cho FilterSearchBar
@@ -150,13 +152,12 @@ export const useProductionOrders = () => {
       key: 'statuses',
       placeholder: 'Trạng thái',
       minWidth: 140,
-      options: [
-        { value: '0', label: 'Đang chờ' },
-        { value: '1', label: 'Đang chạy' },
-        { value: '2', label: 'Hoàn thành' },
-      ],
+      options: (filters.statuses || []).map((s: string) => ({
+        value: s,
+        label: getStatusLabel(s)
+      })),
     },
-  ], []);
+  ], [filters]);
 
   return {
     viewMode,

@@ -1,14 +1,16 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { productApi } from '../api/productApi';
-import type { IProduct, IProductSearchParams } from '../types/product';
 import type { FilterItem } from '../components/FilterSearchBar';
-import { useSearch, useNavigate } from '@tanstack/react-router';
+import type { IProduct } from '../types/product';
+import { useTableFilters } from './useTableFilters';
 
 export const useProducts = () => {
   // 1. Quản lý trạng thái URL thông qua TanStack Router
   const params = useSearch({ from: '/products' });
   const navigate = useNavigate({ from: '/products' });
+  const { onFilterChange, onPageChange } = useTableFilters(navigate);
 
   // 2. Trạng thái debounce để giảm tần suất gọi API khi nhập liệu
   const [debouncedParams, setDebouncedParams] = useState(params);
@@ -26,14 +28,6 @@ export const useProducts = () => {
     }, 400);
     return () => { if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current); };
   }, [params]);
-
-  // Helper cập nhật Search Params lên URL
-  const setParams = useCallback((updater: (prev: IProductSearchParams) => IProductSearchParams) => {
-    navigate({
-      search: (prev) => updater(prev as IProductSearchParams),
-      replace: true,
-    });
-  }, [navigate]);
 
   // Query: Lấy danh sách sản phẩm dựa trên bộ lọc URL
   const { data: productData, isLoading: loading, refetch: fetchProducts } = useQuery({
@@ -78,15 +72,7 @@ export const useProducts = () => {
     enabled: !!selectedProductCode && isDetailModalOpen,
   });
 
-  // Xử lý thay đổi bộ lọc từ giao diện
-  const onFilterChange = (key: string, value: any) => {
-    setParams(prev => ({ ...prev, [key]: value || undefined, page: 1 }));
-  };
 
-  // Xử lý thay đổi trang và giới hạn hiển thị
-  const onPageChange = useCallback((page: number, pageSize: number) => {
-    setParams(prev => ({ ...prev, page, pageSize }));
-  }, [setParams]);
 
   // Mở Modal chi tiết sản phẩm
   const openDetailModal = useCallback((record: IProduct) => {

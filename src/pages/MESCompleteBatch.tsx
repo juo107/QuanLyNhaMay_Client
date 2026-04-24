@@ -1,21 +1,21 @@
 import {
-  SyncOutlined,
   CheckCircleFilled,
   CloseCircleFilled,
   DatabaseFilled,
-  InfoCircleOutlined
+  SyncOutlined
 } from '@ant-design/icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, Col, Row, Typography } from 'antd';
 import React, { useMemo, useState } from 'react';
+import type { IMESCompleteBatch } from '../api/mesCompleteBatchApi';
 import FilterSearchBar from '../components/FilterSearchBar';
-import Table from '../components/Table';
-import StatCard from '../components/StatCard';
-import { useMESCompleteBatch } from '../hooks/useMESCompleteBatch';
 import { getMESCompleteBatchColumns } from '../components/MESCompleteBatch/MESCompleteBatchColumns';
 import MESCompleteBatchDetail from '../components/MESCompleteBatch/MESCompleteBatchDetail';
-import type { IMESCompleteBatch } from '../api/mesCompleteBatchApi';
+import StatCard from '../components/StatCard';
+import Table from '../components/Table';
+import { useMESCompleteBatch } from '../hooks/useMESCompleteBatch';
 
-const { Title, Paragraph, Text } = Typography;
+const { Text } = Typography;
 
 const MESCompleteBatch: React.FC = () => {
   const {
@@ -26,8 +26,13 @@ const MESCompleteBatch: React.FC = () => {
     onFilterChange,
     onPageChange,
     filterConfig,
-    fetchData,
   } = useMESCompleteBatch();
+
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['mesCompleteBatches'] });
+  };
 
   const [selectedRecord, setSelectedRecord] = useState<IMESCompleteBatch | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,11 +65,7 @@ const MESCompleteBatch: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <Title level={2} className="!mb-1">Lịch Sử Hoàn Thành Batch (MES)</Title>
-          <Paragraph className="text-gray-500 text-sm flex items-center gap-2">
-            <InfoCircleOutlined className="text-blue-500" />
-            Giám sát trạng thái truyền dữ liệu thời gian thực từ hệ thống MES
-          </Paragraph>
+          <h2 className="text-2xl font-semibold mb-1">Lịch Sử Hoàn Thành Lô</h2>
         </div>
         <div className="flex gap-2 text-right">
           <Text type="secondary" className="text-[12px] italic block">
@@ -81,7 +82,6 @@ const MESCompleteBatch: React.FC = () => {
             icon={<DatabaseFilled />} 
             color="#1890ff"
             subText="Tổng số lô đã ghi nhận"
-            loading={loading && total === 0}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -90,9 +90,7 @@ const MESCompleteBatch: React.FC = () => {
             value={stats.success} 
             icon={<CheckCircleFilled />} 
             color="#52c41a"
-            percent={stats.successRate}
-            subText="Tỷ lệ hoàn thành trên trang"
-            loading={loading && total === 0}
+            subText="Số lô đã truyền thành công"
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -102,7 +100,6 @@ const MESCompleteBatch: React.FC = () => {
             icon={<CloseCircleFilled />} 
             color="#ff4d4f"
             subText="Các bản ghi cần kiểm tra lại"
-            loading={loading && total === 0}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -111,21 +108,18 @@ const MESCompleteBatch: React.FC = () => {
             value={stats.pending} 
             icon={<SyncOutlined spin={loading} />} 
             color="#faad14"
-            subText="Dữ liệu đang trong hàng đợi"
-            loading={loading && total === 0}
+            subText="Dữ liệu đang trong hàng chờ"
           />
         </Col>
       </Row>
 
-      <Card variant="borderless" className="shadow-sm border border-gray-100" style={{ borderRadius: '16px' }}>
-        <div className="mb-6 p-4 bg-gray-50/50 rounded-xl">
-          <FilterSearchBar
-            filters={filterConfig}
-            values={params as Record<string, any>}
-            onChange={onFilterChange}
-            onRefresh={() => fetchData()}
-          />
-        </div>
+      <Card variant="borderless" className="shadow-sm">
+        <FilterSearchBar
+          filters={filterConfig}
+          values={params as Record<string, any>}
+          onChange={onFilterChange}
+          onRefresh={handleRefresh}
+        />
 
         <Table
           rowKey="id"

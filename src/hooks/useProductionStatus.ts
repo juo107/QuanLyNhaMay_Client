@@ -1,36 +1,33 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { productionOrderApi } from '../api/productionOrderApi';
 import type { FilterItem } from '../components/FilterSearchBar';
 import type { IProductionOrder } from '../types/productionOrderTypes';
+import { useTableFilters } from './useTableFilters';
 
 export const useProductionStatus = () => {
-  // 1. Quản lý trạng thái URL thông qua TanStack Router
   const params = useSearch({ from: '/production-status' });
   const navigate = useNavigate({ from: '/production-status' });
+  const { onFilterChange, onPageChange } = useTableFilters(navigate);
 
   // 2. Các trạng thái giao diện nội bộ
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<IProductionOrder | null>(null);
 
-  // Helper cập nhật Search Params lên URL
-  const setParams = useCallback((updater: (prev: any) => any) => {
-    navigate({
-      search: (prev) => updater(prev),
-      replace: true,
-    });
-  }, [navigate]);
-
   // Query: Lấy danh sách Trạng Thái Sản Xuất dựa trên bộ lọc URL
   const { data: statusData, isLoading: loading, refetch: fetchData } = useQuery({
     queryKey: ['productionStatus', params],
     queryFn: async () => {
+      const p = params as Record<string, any>;
       const finalParams = {
         ...params,
+        statuses: Array.isArray(p.statuses) ? p.statuses.join(',') : p.statuses,
+        processAreas: Array.isArray(p.processAreas) ? p.processAreas.join(',') : p.processAreas,
+        shifts: Array.isArray(p.shifts) ? p.shifts.join(',') : p.shifts,
       };
-      const searchRes: any = await productionOrderApi.search(finalParams);
+      const searchRes: any = await productionOrderApi.searchV2(finalParams);
       const items = searchRes.items ?? searchRes.Items ?? searchRes.data?.items ?? searchRes.data?.Items ?? (Array.isArray(searchRes) ? searchRes : []);
       const total = searchRes.total ?? searchRes.Total ?? searchRes.data?.total ?? searchRes.data?.Total ?? 0;
       return { items, total };
@@ -41,10 +38,14 @@ export const useProductionStatus = () => {
   const { data: stats = { Total: 0, InProgress: 0, Completed: 0, Stopped: 0 } } = useQuery({
     queryKey: ['productionStatusStats', params],
     queryFn: async () => {
+      const p = params as Record<string, any>;
       const finalParams = {
         ...params,
+        statuses: Array.isArray(p.statuses) ? p.statuses.join(',') : p.statuses,
+        processAreas: Array.isArray(p.processAreas) ? p.processAreas.join(',') : p.processAreas,
+        shifts: Array.isArray(p.shifts) ? p.shifts.join(',') : p.shifts,
       };
-      const statsRes: any = await productionOrderApi.getStats(finalParams);
+      const statsRes: any = await productionOrderApi.getStatsV2(finalParams);
       const s = statsRes.data ?? statsRes;
       return {
         Total: s.total ?? s.Total ?? 0,
@@ -55,29 +56,32 @@ export const useProductionStatus = () => {
     },
   });
 
-  // Query: Lấy dữ liệu danh sách lọc (Process Area, Shifts)
-  const { data: filters = { processAreas: [], shifts: [] } } = useQuery({
+  // Query: Lấy dữ liệu danh sách lọc (Process Area, Shifts, Statuses)
+  const { data: filters = { processAreas: [], shifts: [], statuses: [] } } = useQuery({
     queryKey: ['productionFilters'],
     queryFn: async () => {
-      const res: any = await productionOrderApi.getFilters();
+      const res: any = await productionOrderApi.getFiltersV2();
       const d = res?.data ?? res;
       return {
         processAreas: d?.processAreas ?? d?.ProcessAreas ?? [],
-        shifts: d?.shifts ?? d?.Shifts ?? []
+        shifts: d?.shifts ?? d?.Shifts ?? [],
+        statuses: d?.statuses ?? d?.Statuses ?? []
       };
     },
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 
-  // Xử lý thay đổi bộ lọc từ giao diện
-  const onFilterChange = useCallback((key: string, value: any) => {
-    setParams(prev => ({ ...prev, [key]: value || undefined, page: 1 }));
-  }, [setParams]);
 
-  // Xử lý thay đổi trang và giới hạn hiển thị
-  const onPageChange = useCallback((page: number, pageSize: number) => {
-    setParams(prev => ({ ...prev, page, limit: pageSize }));
-  }, [setParams]);
+
+  // Ánh xạ nhãn trạng thái từ mã số
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case '1': return 'Đang chạy';
+      case '0': return 'Đang chờ';
+      case '2': return 'Đã hoàn thành';
+      default: return `Trạng thái ${status}`;
+    }
+  };
 
   // Cấu hình các trường lọc cho FilterSearchBar
   const filterConfig: FilterItem[] = useMemo(() => [
@@ -119,10 +123,10 @@ export const useProductionStatus = () => {
       key: 'statuses',
       placeholder: 'Trạng thái',
       minWidth: 160,
-      options: [
-        { value: 'Đang chạy', label: 'Đang chạy' },
-        { value: 'Đang chờ', label: 'Đang chờ' },
-      ],
+      options: ['1', '0'].map(s => ({
+        value: s,
+        label: getStatusLabel(s)
+      })),
     },
   ], [filters]);
 

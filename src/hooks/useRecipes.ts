@@ -4,26 +4,22 @@ import { useCallback, useRef, useState } from 'react';
 import axiosClient from '../api/axiosClient';
 import { recipeApi } from '../api/recipeApi';
 import { groupRecipesByCode } from '../helpers/recipeHelper';
-import type { IRecipe, IRecipeSearchParams } from '../types/recipeTypes';
+import type { IRecipe } from '../types/recipeTypes';
+import { useTableFilters } from './useTableFilters';
 
 export const useRecipes = () => {
-  const restoredRef = useRef(false);
-
   // 1. Quản lý trạng thái URL thông qua TanStack Router
   const params = useSearch({ from: '/recipes' });
   const navigate = useNavigate({ from: '/recipes' });
+  const { onFilterChange, onPageChange } = useTableFilters(navigate);
+
+  const restoredRef = useRef(false);
 
   // 2. Các trạng thái giao diện nội bộ cho Drawer và phiên bản
   const [selectedRecipe, setSelectedRecipe] = useState<IRecipe | null>(null);
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
 
-  // Helper cập nhật Search Params lên URL
-  const setParams = useCallback((updater: (prev: IRecipeSearchParams) => IRecipeSearchParams) => {
-    navigate({
-      search: (prev) => updater(prev as IRecipeSearchParams),
-      replace: true,
-    });
-  }, [navigate]);
+
 
   // Query: Lấy danh sách công thức dựa trên bộ lọc URL và xử lý gộp nhóm
   const { data: recipeData, isLoading: loading, refetch: fetchRecipes } = useQuery({
@@ -62,15 +58,7 @@ export const useRecipes = () => {
     enabled: isDetailDrawerOpen && !!selectedRecipe?.recipeCode,
   });
 
-  // Xử lý thay đổi bộ lọc từ giao diện
-  const onFilterChange = (key: string, value: any) => {
-    setParams(prev => ({ ...prev, [key]: value || undefined, page: 1 }));
-  };
 
-  // Xử lý thay đổi trang và giới hạn hiển thị
-  const onPageChange = useCallback((page: number, pageSize: number) => {
-    setParams(prev => ({ ...prev, page, limit: pageSize }));
-  }, [setParams]);
 
   // Mở Drawer chi tiết cho một công thức
   const openDetailDrawer = useCallback((recipe: IRecipe) => {

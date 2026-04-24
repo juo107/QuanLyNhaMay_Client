@@ -86,9 +86,8 @@ const ProductionOrderDetail: React.FC = () => {
                   {order.productionOrderNumber || '-'}
                 </Title>
                 <div className="flex items-center gap-2">
-                  {order.status === 1 && <Tag color="blue" className="rounded-full px-3 py-0.5 m-0 border-none bg-blue-50 text-blue-600 font-medium">Đang chạy</Tag>}
-                  {order.status === -1 && <Tag color="error" className="rounded-full px-3 py-0.5 m-0 border-none bg-red-50 text-red-600 font-medium">Đã hủy</Tag>}
-                  {order.status === 2 && <Tag color="success" className="rounded-full px-3 py-0.5 m-0 border-none bg-green-50 text-green-600 font-medium">Hoàn thành</Tag>}
+                  {order.status === -1 && <Tag color="warning" className="rounded-full px-3 py-0.5 m-0 border-none bg-orange-50 text-orange-600 font-medium">Đang chạy</Tag>}
+                  {order.status === 0 && <Tag color="blue" className="rounded-full px-3 py-0.5 m-0 border-none bg-blue-50 text-blue-600 font-medium">Đang chờ</Tag>}
                 </div>
               </div>
               <div className="flex flex-col">

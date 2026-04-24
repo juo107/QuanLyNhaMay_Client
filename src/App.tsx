@@ -4,6 +4,7 @@ import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { router } from './router';
+import { ToastProvider } from './context/ToastContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,18 +20,22 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider
-        locale={viVN}
-        theme={{
-          token: {
-            colorPrimary: '#1677ff',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-            colorBgContainer: '#ffffff',
-          },
-        }}
-      >
-        <RouterProvider router={router} />
-      </ConfigProvider>
+      <ToastProvider>
+        <ConfigProvider
+          locale={viVN}
+          theme={{
+            token: {
+              colorPrimary: '#1677ff',
+              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+              borderRadius: 8,
+              colorBgContainer: '#ffffff',
+              colorBgLayout: '#f8fafc',
+            },
+          }}
+        >
+          <RouterProvider router={router} />
+        </ConfigProvider>
+      </ToastProvider>
     </QueryClientProvider>
   );
 };

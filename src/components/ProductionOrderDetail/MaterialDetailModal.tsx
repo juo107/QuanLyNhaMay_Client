@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Button, Tag, Typography, Descriptions } from 'antd';
+import { Button, Tag, Typography, Descriptions, Tooltip } from 'antd';
 import { ArrowLeftOutlined, EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import Modal from '../../components/Modal';
@@ -54,7 +54,7 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
       dataIndex: 'batchCode',
       key: 'batchCode',
       width: 100,
-      render: (t: any) => t ? <Tag color="blue" className="rounded-full px-3 py-0.5 font-bold text-[13px]">{t}</Tag> : <Text type="secondary" italic className="text-[13px]">No Batch</Text>
+      render: (t: any) => t ? <Tag color="blue" className="rounded-full px-3 py-0.5 font-bold text-[13px]">{t}</Tag> : <Text type="secondary" italic className="text-[13px]">-</Text>
     },
     {
       title: 'Ingredient Code',
@@ -64,7 +64,7 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
       render: (code: any) => (
         <div className="whitespace-normal break-words leading-tight">
           <span className="inline-block px-2 py-0.5 bg-gray-50 text-gray-800 border border-gray-100 rounded font-bold text-[13px]">
-            {code}
+            {code || '-'}
           </span>
         </div>
       )
@@ -83,7 +83,8 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
       width: 130,
       render: (_: any, r: any) => {
         const plan = calculatePlanQuantity(r, batches, parseFloat(order.quantity as any) || 1, order.productQuantity, ingredientsTotals);
-        return <Text className="text-[14px] font-bold text-gray-700">{plan > 0 ? plan.toFixed(2) : 'N/A'} {r.unitOfMeasurement}</Text>;
+        if (plan === null) return <span className="text-gray-300 italic">N/A</span>;
+        return <Text className="text-[14px] font-bold text-gray-700">{plan.toFixed(2)} {r.unitOfMeasurement}</Text>;
       }
     },
     {
@@ -93,8 +94,9 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
       align: 'right' as const,
       width: 130,
       render: (q: any, r: any) => {
+        if (!r.id || q === null || q === undefined) return <span className="text-gray-300 italic">N/A</span>;
         const val = parseFloat(q as any) || 0;
-        return <Text className={`text-[14px] font-bold ${val > 0 ? 'text-gray-900' : 'text-gray-300'}`}>{val > 0 ? val.toFixed(2) : 'N/A'} {r.unitOfMeasurement}</Text>;
+        return <Text className="text-[14px] font-bold text-gray-900">{val.toFixed(2)} {r.unitOfMeasurement}</Text>;
       }
     },
     {
@@ -111,13 +113,20 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
     },
     {
       title: 'Status',
-      dataIndex: 'response',
-      key: 'response',
+      dataIndex: 'respone',
+      key: 'respone',
       width: 100,
       align: 'center' as const,
       render: (resp: any) => {
-        const isSuccess = resp?.includes('Success');
-        return <Tag color={isSuccess ? 'success' : 'error'} className="font-bold px-2 py-0.5 text-[11px] rounded">{isSuccess ? 'SUCCESS' : 'FAILED'}</Tag>;
+        if (!resp) return <span className="text-gray-300">-</span>;
+        const isSuccess = resp.toLowerCase().includes('success');
+        return (
+          <Tooltip title={resp}>
+            <Tag color={isSuccess ? 'success' : 'error'} className="font-bold px-2 py-0.5 text-[11px] rounded">
+              {isSuccess ? 'SUCCESS' : 'FAILED'}
+            </Tag>
+          </Tooltip>
+        );
       }
     },
     {
@@ -173,10 +182,30 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
               </Descriptions.Item>
               <Descriptions.Item label="Số Lượng Thực Tế">
                 <div className="flex items-center gap-2">
-                  <Text className={`text-[18px] ${(parseFloat(selectedItem.quantity as any) || 0) > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
-                    {(parseFloat(selectedItem.quantity as any) || 0) > 0 ? (parseFloat(selectedItem.quantity as any) || 0).toFixed(2) : 'N/A'}
-                  </Text>
-                  <Text className="text-[12px] uppercase font-medium text-gray-500">{selectedItem.unitOfMeasurement}</Text>
+                  {!selectedItem.id ? (
+                    <Text className="text-gray-300 italic">N/A</Text>
+                  ) : (
+                    <>
+                      <Text className="text-[18px] text-gray-900 font-bold">
+                        {(parseFloat(selectedItem.quantity as any) || 0).toFixed(2)}
+                      </Text>
+                      <Text className="text-[12px] uppercase font-medium text-gray-500">{selectedItem.unitOfMeasurement}</Text>
+                    </>
+                  )}
+                </div>
+              </Descriptions.Item>
+              <Descriptions.Item label="Số Lượng Kế Hoạch">
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const plan = calculatePlanQuantity(selectedItem, batches, parseFloat(order.quantity as any) || 1, order.productQuantity, ingredientsTotals);
+                    if (plan === null) return <Text className="text-gray-300 italic">N/A</Text>;
+                    return (
+                      <>
+                        <Text className="text-[18px] text-[#5b4ce8] font-bold">{plan.toFixed(2)}</Text>
+                        <Text className="text-[12px] uppercase font-medium text-gray-500">{selectedItem.unitOfMeasurement}</Text>
+                      </>
+                    );
+                  })()}
                 </div>
               </Descriptions.Item>
               <Descriptions.Item label="Thời Gian Ghi Nhận">
@@ -185,15 +214,15 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                 </Text>
               </Descriptions.Item>
               <Descriptions.Item label="Trạng Thái">
-                {selectedItem.response?.includes('Success') ?
-                  <Tag color="success" className="px-4 py-1 text-[13px] rounded-lg">SUCCESS</Tag> :
-                  <Tag color="error" className="px-4 py-1 text-[13px] rounded-lg">FAILED</Tag>
-                }
+                <Text className="text-gray-800 font-medium">
+                  {selectedItem.status1 || '-'}
+                </Text>
               </Descriptions.Item>
               <Descriptions.Item label="Thông tin khác" span={2}>
                 <div className="flex flex-col text-xs text-gray-500">
                   <span>Máy: {selectedItem.supplyMachine || '-'}</span>
-                  <span>Operator ID: {selectedItem.operatorId || '-'}</span>
+                  <span>Operator ID: {selectedItem.operator_ID || '-'}</span>
+                  <span>Count: {selectedItem.count ?? '-'}</span>
                 </div>
               </Descriptions.Item>
               <Descriptions.Item label="Request/Response Log" span={2}>
@@ -201,8 +230,8 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
                   <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-[12px] text-gray-700 overflow-auto max-h-[250px] font-mono shadow-inner">
                     <pre className="m-0 whitespace-pre-wrap break-words">{selectedRecordRequest}</pre>
                   </div>
-                  <div className={`p-2 rounded text-[11px] border font-mono ${selectedItem.response?.includes('Success') ? 'bg-green-50' : 'bg-red-50'}`}>
-                    {selectedItem.response || 'No response message'}
+                  <div className={`p-2 rounded text-[11px] border font-mono ${selectedItem.respone?.includes('Success') ? 'bg-green-50' : 'bg-red-50'}`}>
+                    {selectedItem.respone || 'No response message'}
                   </div>
                 </div>
               </Descriptions.Item>
@@ -215,7 +244,7 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
             <div className="flex items-center gap-2">
               <Text className="text-gray-900 font-extrabold text-[16px]">Ingredient:</Text>
               <Text className="text-gray-600 font-normal text-[15px]">
-                {selectedGroup.ingredientCode} - {ingredientsTotals[selectedGroup.ingredientCode]?.description || ""}
+                {selectedGroup.ingredientCode} {selectedGroup.itemName ? `- ${selectedGroup.itemName}` : ''}
               </Text>
             </div>
             <div className="flex items-center gap-2">
@@ -223,9 +252,19 @@ const MaterialDetailModal: React.FC<MaterialDetailModalProps> = ({
               <Text className="text-gray-600 font-normal text-[15px]">{selectedGroup.lot || "-"}</Text>
             </div>
             <div className="flex items-center gap-2">
+              <Text className="text-gray-900 font-extrabold text-[16px]">Total Plan:</Text>
+              <Text className="font-bold text-[15px] text-[#5b4ce8]">
+                {(selectedGroup as any).hasPlanData 
+                  ? `${selectedGroup.totalPlanQuantity.toFixed(2)} ${selectedGroup.unitOfMeasurement}`
+                  : <span className="text-gray-300 italic">N/A</span>}
+              </Text>
+            </div>
+            <div className="flex items-center gap-2">
               <Text className="text-gray-900 font-extrabold text-[16px]">Total Actual:</Text>
-              <Text className={`font-normal text-[15px] ${(selectedGroup.totalQuantity || 0) > 0 ? 'text-gray-700' : 'text-gray-300'}`}>
-                {(selectedGroup.totalQuantity || 0) > 0 ? (selectedGroup.totalQuantity || 0).toFixed(2) : 'N/A'} {selectedGroup.unitOfMeasurement}
+              <Text className="font-bold text-[15px] text-green-600">
+                {(selectedGroup as any).hasActualData 
+                  ? `${selectedGroup.totalQuantity.toFixed(2)} ${selectedGroup.unitOfMeasurement}`
+                  : <span className="text-gray-300 italic">N/A</span>}
               </Text>
             </div>
           </div>

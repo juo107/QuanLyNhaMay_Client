@@ -1,11 +1,13 @@
 import { CheckCircleOutlined, ExperimentOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
-import { Table as AntdTable, Card, Col, Descriptions, Empty, Row, Spin, Statistic, Tabs, Tag, Typography } from 'antd';
+import { Table as AntdTable, Card, Col, Descriptions, Empty, Row, Spin, Tabs, Tag, Typography } from 'antd';
+import { useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo } from 'react';
 import CommonDrawer from '../components/CommonDrawer';
 import FilterSearchBar from '../components/FilterSearchBar';
 import { getRecipeColumns, getRecipeFilters } from '../components/Recipe/RecipeColumns';
+import StatCard from '../components/StatCard';
 import Table from '../components/Table';
 import { formatVersionDisplay } from '../helpers/recipeHelper';
 import { useRecipes } from '../hooks/useRecipes';
@@ -20,7 +22,7 @@ const Recipes: React.FC = () => {
 
   const {
     stats,
-    data,
+    data, 
     loading,
     params,
     total,
@@ -32,9 +34,15 @@ const Recipes: React.FC = () => {
     onPageChange,
     openDetailDrawer,
     closeDetailDrawer,
-    fetchRecipes,
     restoredRef
   } = useRecipes();
+
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    await queryClient.invalidateQueries({ queryKey: ['recipeStats'] });
+  };
 
   useEffect(() => {
     const state = locationState as { reopenDrawer?: boolean; selectedRecipe?: IRecipe } | null;
@@ -52,24 +60,35 @@ const Recipes: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold mb-1">Công Thức</h2>
-        <p className="text-gray-500 text-sm">Quản lý dữ liệu chính công thức sản xuất</p>
       </div>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={12} md={8}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Tổng số Công thức" value={stats.total} styles={{ content: { color: '#1677ff' } }} prefix={<ExperimentOutlined />} />
-          </Card>
+      <Row gutter={[20, 20]}>
+        <Col xs={24} sm={12} lg={8}>
+          <StatCard 
+            title="Tổng số Công thức" 
+            value={stats.total} 
+            icon={<ExperimentOutlined />} 
+            color="#1677ff"
+            subText="Các bộ quy trình sản xuất"
+          />
         </Col>
-        <Col xs={12} sm={12} md={8}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Công thức Hoạt động" value={stats.active} styles={{ content: { color: '#3f8600' } }} prefix={<CheckCircleOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={8}>
+          <StatCard 
+            title="Công thức Hoạt động" 
+            value={stats.active} 
+            icon={<CheckCircleOutlined />} 
+            color="#52c41a"
+            subText="Đang áp dụng trong sản xuất"
+          />
         </Col>
-        <Col xs={12} sm={12} md={8}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Tổng Phiên bản" value={stats.totalVersions} styles={{ content: { color: '#fa8c16' } }} prefix={<HistoryOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={8}>
+          <StatCard 
+            title="Tổng Phiên bản" 
+            value={stats.totalVersions} 
+            icon={<HistoryOutlined />} 
+            color="#fa8c16"
+            subText="Lịch sử các lần thay đổi"
+          />
         </Col>
       </Row>
 
@@ -78,7 +97,7 @@ const Recipes: React.FC = () => {
           filters={filterConfig}
           values={params as Record<string, any>}
           onChange={onFilterChange}
-          onRefresh={() => fetchRecipes()}
+          onRefresh={handleRefresh}
         />
         <Table
           rowKey="recipeDetailsId"

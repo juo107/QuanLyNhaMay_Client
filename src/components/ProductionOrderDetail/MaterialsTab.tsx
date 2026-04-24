@@ -7,6 +7,7 @@ import Table from '../Table';
 import MaterialDetailModal from './MaterialDetailModal';
 import { getMaterialsTableColumns } from './MaterialsTableColumns';
 
+
 interface MaterialsTabProps {
   order: IProductionOrder;
   batches: IBatch[];
@@ -15,9 +16,15 @@ interface MaterialsTabProps {
   onChangeBatchFilter?: (code: string | null) => void;
 }
 
-
-const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter, onClearFilter, onChangeBatchFilter }) => {
+const MaterialsTab: React.FC<MaterialsTabProps> = ({
+  order,
+  batches,
+  batchFilter,
+  onClearFilter,
+  onChangeBatchFilter
+}) => {
   if (!order) return null;
+
   // 1. Logic & Data (Custom Hook)
   const {
     loading,
@@ -44,11 +51,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter
   // 3. Table Columns Configuration
   const columns = useMemo(() => getMaterialsTableColumns({
     onView: (record) => {
-      if (record.items.length === 1) {
-        setSelectedItem(record.items[0]);
-      } else {
-        setSelectedGroup(record);
-      }
+      setSelectedGroup(record);
       setIsModalOpen(true);
     }
   }), []);
@@ -89,7 +92,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter
                 <div
                   onClick={() => {
                     setSelectedBatchCode("");
-                    const hasConsumption = allMaterials.some(m => (!m.batchCode || m.batchCode.trim() === "") && m.id);
+                    const hasConsumption = allMaterials.some(m => (!m.batchCode || m.batchCode.trim() === "") && (m.quantity as any) > 0);
                     setFilterType(hasConsumption ? 'consumed' : 'unconsumed');
                   }}
                   className={`px-4 py-1.5 rounded-full border cursor-pointer text-xs font-bold transition-all duration-200 ${selectedBatchCode === ""
@@ -103,7 +106,7 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter
               {batches.filter(batch => batch.batchNumber).map((batch) => {
                 const batchNumNormalized = batch.batchNumber.trim().toUpperCase();
                 const isSelected = (selectedBatchCode || '').trim().toUpperCase() === batchNumNormalized;
-                const hasConsumption = allMaterials.some(m => (m.batchCode || '').trim().toUpperCase() === batchNumNormalized && m.id);
+                const hasConsumption = allMaterials.some(m => (m.batchCode || '').trim().toUpperCase() === batchNumNormalized && (m.quantity as any) > 0);
                 return (
                   <div
                     key={batch.batchNumber}
@@ -195,17 +198,17 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({ order, batches, batchFilter
         </div>
       </div>
 
-      {/* Main Table */}
-      <Table
-        columns={columns}
-        data={filteredData}
-        isLoading={loading}
-        pageSize={15}
-        bordered
-        size="middle"
-        rowKey={(record) => `${record.batchCode}-${record.ingredientCode}-${record.lot}`}
-        className="custom-table"
-      />
+      {/* Main Table Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <Table
+          rowKey="ingredientCode"
+          columns={columns}
+          data={filteredData}
+          isLoading={loading}
+          hidePagination={true}
+          className="material-flat-table"
+        />
+      </div>
 
       {/* Detailed Modal */}
       <MaterialDetailModal

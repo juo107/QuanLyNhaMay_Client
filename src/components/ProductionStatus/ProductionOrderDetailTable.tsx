@@ -16,7 +16,7 @@ const ProductionOrderDetailTable: React.FC<Props> = ({ selectedOrder }) => {
   const currentB = selectedOrder.currentBatch ?? 0;
   const totalB = selectedOrder.totalBatches ?? 0;
   const progress = totalB > 0 ? Math.round((Number(currentB) / totalB) * 100) : 0;
-  const isRunning = selectedOrder.status === 1;
+  const isRunning = selectedOrder.status === -1;
 
   return (
     <div className="production-detail-container">

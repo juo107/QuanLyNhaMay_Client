@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { message } from 'antd';
+import { toastNative } from '../utils/toastManager';
 
 const axiosClient = axios.create({
   baseURL: 'https://localhost:7103/api',
@@ -42,7 +42,7 @@ axiosClient.interceptors.response.use(
         return data;
       }
       // If code is not 200, it's an API-level error
-      message.error(msg || 'API Error');
+      toastNative.error(msg || 'API Error', 'Lỗi hệ thống');
       return Promise.reject(new Error(msg || 'API Error'));
     }
     
@@ -52,9 +52,8 @@ axiosClient.interceptors.response.use(
   (error) => {
     const errorMsg = error.response?.data?.Message || error.response?.data?.message || error.message || 'Lỗi kết nối server';
     console.error('API Error:', errorMsg);
-    // Use a small delay or check if message is available to avoid the warning if possible
-    // For now, we will still show it but the increased timeout is the main fix
-    message.error({ content: errorMsg, key: 'api_error' }); 
+    // Use custom toast
+    toastNative.error(errorMsg, 'Lỗi kết nối'); 
     throw error;
   }
 );

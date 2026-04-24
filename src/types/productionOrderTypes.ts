@@ -61,11 +61,11 @@ export interface IMaterialConsumption {
   quantity: string | number;
   unitOfMeasurement: string;
   datetime: string;
-  operatorId: string;
+  operator_ID: string;
   supplyMachine: string;
   count: number;
   request: string;
-  response: string;
+  respone: string;
   status1: string;
   timestamp: string;
 }
@@ -73,12 +73,13 @@ export interface IMaterialConsumption {
 export interface IGroupedMaterial {
   batchCode: string | null;
   ingredientCode: string;
+  itemName?: string;
   lot: string;
   unitOfMeasurement: string;
   totalQuantity: number;
   totalPlanQuantity: number;
   items: IMaterialConsumption[];
-  ids: (number | null)[];
-  latestDatetime: string;
-  response: string | null;
+  ids: (string | number)[];
+  latestDatetime: string | null;
+  respone: string | null;
 }

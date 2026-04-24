@@ -1,8 +1,9 @@
 import { ReloadOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Input, Select } from 'antd';
+import { Button, DatePicker, Input, Select, Tag } from 'antd';
 import dayjs from 'dayjs';
 import React from 'react';
 import { useResponsive } from '../hooks/useResponsive';
+import { useToast } from '../hooks/useToast';
 import CheckboxSelect from './CheckboxSelect';
 
 const { RangePicker } = DatePicker;
@@ -54,10 +55,11 @@ export type FilterItem = ISearchFilter | ICheckboxSelectFilter | ISelectFilter |
 
 import CommonAutoComplete from './CommonAutoComplete';
 
+
 interface IFilterSearchBarProps {
   filters: FilterItem[];
   values: Record<string, any>;
-  onChange: (key: string, value: any) => void;
+  onChange: (keyOrUpdates: string | Record<string, any>, value?: any) => void;
   onRefresh?: () => void;
   extraActions?: React.ReactNode;
 }
@@ -70,6 +72,14 @@ export const FilterSearchBar: React.FC<IFilterSearchBarProps> = ({
   extraActions,
 }) => {
   const { isMobile } = useResponsive();
+  const { success } = useToast();
+
+  const handleRefreshInternal = () => {
+    if (onRefresh) {
+      onRefresh();
+      success('Dữ liệu đã được cập nhật mới nhất từ hệ thống.', 'Làm mới thành công');
+    }
+  };
   const renderFilter = (filter: FilterItem, index: number) => {
     switch (filter.type) {
       case 'search':
@@ -121,10 +131,17 @@ export const FilterSearchBar: React.FC<IFilterSearchBarProps> = ({
       case 'dateRange': {
         const startValue = values[filter.key[0]] ? dayjs(values[filter.key[0]]) : null;
         const endValue = values[filter.key[1]] ? dayjs(values[filter.key[1]]) : null;
+        const isToday = startValue && endValue &&
+          startValue.isSame(dayjs(), 'day') &&
+          endValue.isSame(dayjs(), 'day');
 
         if (isMobile) {
           return (
             <div key={index} className="flex flex-col gap-2 w-full">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Thời gian</span>
+                {isToday && <Tag color="blue" className="m-0 text-[10px]">Hôm nay</Tag>}
+              </div>
               <DatePicker
                 placeholder={filter.placeholder?.[0] || 'Từ ngày'}
                 value={startValue}
@@ -142,22 +159,37 @@ export const FilterSearchBar: React.FC<IFilterSearchBarProps> = ({
         }
 
         return (
-          <RangePicker
-            key={index}
-            style={{ width: isMobile ? '100%' : 'auto' }}
-            placeholder={filter.placeholder || ['Từ ngày', 'Đến ngày']}
-            value={startValue && endValue ? [startValue, endValue] : null}
-            onChange={(_: any, dateStrings: [string, string] | null) => {
-              onChange(filter.key[0], dateStrings ? dateStrings[0] : '');
-              onChange(filter.key[1], dateStrings ? dateStrings[1] : '');
-            }}
-            presets={[
-              { label: 'Hôm nay', value: [dayjs().startOf('day'), dayjs().endOf('day')] },
-              { label: 'Hôm qua', value: [dayjs().subtract(1, 'd').startOf('day'), dayjs().subtract(1, 'd').endOf('day')] },
-              { label: '7 ngày qua', value: [dayjs().subtract(7, 'd'), dayjs()] },
-              { label: 'Tháng này', value: [dayjs().startOf('month'), dayjs().endOf('month')] },
-            ]}
-          />
+          <div key={index} className="flex items-center gap-2">
+            <RangePicker
+              style={{ width: 'auto' }}
+              placeholder={filter.placeholder || ['Từ ngày', 'Đến ngày']}
+              value={startValue && endValue ? [startValue, endValue] : null}
+              onChange={(_: any, dateStrings: [string, string] | null) => {
+                if (dateStrings) {
+                  onChange({
+                    [filter.key[0]]: dateStrings[0],
+                    [filter.key[1]]: dateStrings[1]
+                  } as any);
+                } else {
+                  onChange({
+                    [filter.key[0]]: undefined,
+                    [filter.key[1]]: undefined
+                  } as any);
+                }
+              }}
+              presets={[
+                { label: 'Hôm nay', value: [dayjs().startOf('day'), dayjs().endOf('day')] },
+                { label: 'Hôm qua', value: [dayjs().subtract(1, 'd').startOf('day'), dayjs().subtract(1, 'd').endOf('day')] },
+                { label: '7 ngày qua', value: [dayjs().subtract(7, 'd'), dayjs()] },
+                { label: 'Tháng này', value: [dayjs().startOf('month'), dayjs().endOf('month')] },
+              ]}
+            />
+            {isToday && (
+              <Tag color="blue" className="rounded-full px-3 py-0.5 border-blue-200 bg-blue-50 text-blue-600 font-bold text-[11px] animate-pulse">
+                Hôm nay
+              </Tag>
+            )}
+          </div>
         );
       }
 
@@ -186,7 +218,7 @@ export const FilterSearchBar: React.FC<IFilterSearchBarProps> = ({
       </div>
       <div className="flex gap-2 w-full sm:w-auto justify-end">
         {onRefresh && (
-          <Button icon={<ReloadOutlined />} onClick={onRefresh} className={isMobile ? "flex-1" : ""}>Làm mới</Button>
+          <Button icon={<ReloadOutlined />} onClick={handleRefreshInternal} className={isMobile ? "flex-1" : ""}>Làm mới</Button>
         )}
         {extraActions}
       </div>

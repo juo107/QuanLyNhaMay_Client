@@ -1,7 +1,11 @@
 import { Card, Progress, Typography } from 'antd';
-import React from 'react';
+import React, { cloneElement, isValidElement } from 'react';
+import CountUp from 'react-countup';
 
 const { Title, Text, Paragraph } = Typography;
+
+// Fix for ESM/CJS interop issues with react-countup in some environments
+const CountUpComponent = (CountUp as any).default || CountUp;
 
 interface IStatCardProps {
   title: string;
@@ -10,7 +14,6 @@ interface IStatCardProps {
   color: string;
   subText?: string;
   percent?: number;
-  loading?: boolean;
 }
 
 const StatCard: React.FC<IStatCardProps> = ({ 
@@ -19,15 +22,13 @@ const StatCard: React.FC<IStatCardProps> = ({
   icon, 
   color, 
   subText, 
-  percent, 
-  loading 
+  percent 
 }) => {
   return (
     <Card 
       variant="borderless" 
       className="shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden h-full"
       style={{ borderRadius: '12px', borderLeft: `4px solid ${color}` }}
-      loading={loading}
     >
       <div className="flex justify-between items-start">
         <div className="flex-1">
@@ -36,13 +37,15 @@ const StatCard: React.FC<IStatCardProps> = ({
           </Text>
           <div className="flex items-baseline gap-2">
             <Title level={3} className="!m-0 font-extrabold tracking-tight">
-              {typeof value === 'number' ? value.toLocaleString() : value}
+              {typeof value === 'number' ? (
+                <CountUpComponent end={value} duration={1.5} separator="," />
+              ) : value}
             </Title>
             {percent !== undefined && (
               <div 
                 className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${percent > 90 ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}
               >
-                {percent}%
+                <CountUpComponent end={percent} duration={1.5} />%
               </div>
             )}
           </div>
@@ -56,9 +59,9 @@ const StatCard: React.FC<IStatCardProps> = ({
           className="p-3 rounded-xl flex items-center justify-center" 
           style={{ backgroundColor: `${color}15`, color: color }}
         >
-          {icon && React.cloneElement(icon as React.ReactElement, { 
+          {isValidElement(icon) ? cloneElement(icon as React.ReactElement<{ style?: React.CSSProperties }>, { 
             style: { fontSize: '22px' } 
-          })}
+          }) : icon}
         </div>
       </div>
       
@@ -66,11 +69,10 @@ const StatCard: React.FC<IStatCardProps> = ({
         <div className="mt-4">
           <Progress 
             percent={percent} 
-            size="small" 
+            size={4} 
             showInfo={false} 
             strokeColor={color} 
-            trailColor={`${color}10`}
-            strokeWidth={4}
+            railColor={`${color}10`}
           />
         </div>
       )}

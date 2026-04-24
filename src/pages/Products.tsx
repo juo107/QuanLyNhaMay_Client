@@ -1,12 +1,14 @@
+import { AppstoreOutlined, CheckCircleOutlined, GroupOutlined, InboxOutlined, TagsOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Row, Spin } from 'antd';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useMemo } from 'react';
-import { Card, Row, Col, Statistic, Button, Spin } from 'antd';
-import { AppstoreOutlined, UnorderedListOutlined, InboxOutlined, CheckCircleOutlined, TagsOutlined, GroupOutlined } from '@ant-design/icons';
-import Table from '../components/Table';
 import FilterSearchBar from '../components/FilterSearchBar';
 import Modal from '../components/Modal';
-import { useProducts } from '../hooks/useProducts';
 import { getProductColumns } from '../components/Product/ProductColumns';
 import ProductDetail from '../components/Product/ProductDetail';
+import StatCard from '../components/StatCard';
+import Table from '../components/Table';
+import { useProducts } from '../hooks/useProducts';
 import { useResponsive } from '../hooks/useResponsive';
 
 const Products: React.FC = () => {
@@ -25,8 +27,14 @@ const Products: React.FC = () => {
     openDetailModal,
     closeDetailModal,
     filterConfig,
-    fetchProducts
   } = useProducts();
+
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['products'] });
+    await queryClient.invalidateQueries({ queryKey: ['productStats'] });
+  };
 
   const columns = useMemo(() => getProductColumns(openDetailModal), [openDetailModal]);
 
@@ -34,30 +42,44 @@ const Products: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold mb-1">Danh Mục Sản Phẩm</h2>
-        <p className="text-gray-500 text-sm">Quản lý dữ liệu chính sản phẩm và quy đổi đơn vị</p>
       </div>
 
-      <Row gutter={[16, 16]}>
-        {/* Responsive bằng cách sử dụng hook hoặc truyền trực tiếp vào Col đều được */}
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Tổng Sản Phẩm" value={stats.totalProducts} styles={{ content: { color: '#1677ff' } }} prefix={<InboxOutlined />} />
-          </Card>
+      <Row gutter={[20, 20]}>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Tổng Sản Phẩm"
+            value={stats.totalProducts}
+            icon={<InboxOutlined />}
+            color="#1677ff"
+            subText="Sản phẩm trong danh mục"
+          />
         </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Sản Phẩm Hoạt Động" value={stats.activeProducts} styles={{ content: { color: '#3f8600' } }} prefix={<CheckCircleOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Sản Phẩm Hoạt Động"
+            value={stats.activeProducts}
+            icon={<CheckCircleOutlined />}
+            color="#52c41a"
+            subText="Sản phẩm đang kinh doanh"
+          />
         </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Phân Loại (Type)" value={stats.totalTypes} styles={{ content: { color: '#fa8c16' } }} prefix={<TagsOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Phân Loại (Type)"
+            value={stats.totalTypes}
+            icon={<TagsOutlined />}
+            color="#fa8c16"
+            subText="Các loại sản phẩm khác nhau"
+          />
         </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Nhóm (Group)" value={stats.totalGroups} styles={{ content: { color: '#722ed1' } }} prefix={<GroupOutlined />} />
-          </Card>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Nhóm (Group)"
+            value={stats.totalGroups}
+            icon={<GroupOutlined />}
+            color="#722ed1"
+            subText="Các nhóm sản phẩm chính"
+          />
         </Col>
       </Row>
 
@@ -66,7 +88,7 @@ const Products: React.FC = () => {
           filters={filterConfig}
           values={params as Record<string, any>}
           onChange={onFilterChange}
-          onRefresh={() => fetchProducts()}
+          onRefresh={handleRefresh}
           extraActions={
             // Ẩn 2 nút chức năng này nếu đang ở màn hình điện thoại cho gọn
             !isMobile && (

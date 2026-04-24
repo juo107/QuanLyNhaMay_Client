@@ -1,10 +1,12 @@
-import { CheckCircleOutlined, HistoryOutlined } from '@ant-design/icons';
-import { Card, Col, Row, Statistic } from 'antd';
+import { CheckCircleOutlined, CloseCircleOutlined, HistoryOutlined } from '@ant-design/icons';
+import { useQueryClient } from '@tanstack/react-query';
+import { Card, Col, Row } from 'antd';
 import React, { useMemo } from 'react';
 import CommonDrawer from '../components/CommonDrawer';
 import { getConsumptionLogColumns } from '../components/ConsumptionLog/ConsumptionLogColumns';
 import ConsumptionLogDetail from '../components/ConsumptionLog/ConsumptionLogDetail';
 import FilterSearchBar from '../components/FilterSearchBar';
+import StatCard from '../components/StatCard';
 import Table from '../components/Table';
 import { useConsumptionLog } from '../hooks/useConsumptionLog';
 import { useResponsive } from '../hooks/useResponsive';
@@ -15,6 +17,8 @@ const ConsumptionLog: React.FC = () => {
   const {
     data,
     total,
+    success,
+    failed,
     loading,
     params,
     isDetailModalOpen,
@@ -24,8 +28,13 @@ const ConsumptionLog: React.FC = () => {
     onPageChange,
     showDetail,
     filterConfig,
-    fetchData,
   } = useConsumptionLog();
+
+  const queryClient = useQueryClient();
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['consumptionLogs'] });
+  };
 
   const columns = useMemo(() => getConsumptionLogColumns(showDetail), [showDetail]);
 
@@ -33,25 +42,35 @@ const ConsumptionLog: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold mb-1">Nhật Ký Tiêu Hao</h2>
-        <p className="text-gray-500 text-sm">Xem lịch sử sử dụng nguyên vật liệu từ SCADA</p>
       </div>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic title="Tổng số bản ghi" value={total} styles={{ content: { color: '#1677ff' } }} prefix={<HistoryOutlined />} />
-          </Card>
+      <Row gutter={[20, 20]}>
+        <Col xs={24} sm={12} lg={8}>
+          <StatCard
+            title="Tổng số bản ghi"
+            value={total}
+            icon={<HistoryOutlined />}
+            color="#1677ff"
+            subText="Lịch sử tiêu hao vật liệu"
+          />
         </Col>
-        <Col xs={12} sm={12} lg={6}>
-          <Card variant="borderless" className="shadow-sm">
-            <Statistic
-              title="Thành công"
-              value={data.filter((i: any) => (i.response || i.respone)?.toLowerCase().includes('success')).length}
-              suffix={`/ ${data.length}`}
-              styles={{ content: { color: '#3f8600' } }}
-              prefix={<CheckCircleOutlined />}
-            />
-          </Card>
+        <Col xs={24} sm={12} lg={8}>
+          <StatCard
+            title="Thành công"
+            value={success}
+            icon={<CheckCircleOutlined />}
+            color="#52c41a"
+            subText="Bản ghi đã truyền thành công"
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={8}>
+          <StatCard
+            title="Lỗi/Thất bại"
+            value={failed}
+            icon={<CloseCircleOutlined />}
+            color="#ff4d4f"
+            subText="Bản ghi truyền thất bại hoặc bị lỗi"
+          />
         </Col>
       </Row>
 
@@ -60,7 +79,7 @@ const ConsumptionLog: React.FC = () => {
           filters={filterConfig}
           values={params as any}
           onChange={onFilterChange}
-          onRefresh={() => fetchData()}
+          onRefresh={handleRefresh}
         />
         <Table
           rowKey="id"

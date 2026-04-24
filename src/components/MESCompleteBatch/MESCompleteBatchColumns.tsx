@@ -39,7 +39,7 @@ export const getMESCompleteBatchColumns = () => [
     ellipsis: true,
     render: (_: any, record: IMESCompleteBatch) => (
       <div className="flex flex-col">
-        <Text strong className="text-[13px] line-clamp-1">{record.productName || 'N/A'}</Text>
+        <Text className="text-[15px] line-clamp-1">{record.productName || 'N/A'}</Text>
         <Text type="secondary" className="text-[11px]">{record.productCode || 'N/A'}</Text>
       </div>
     ),

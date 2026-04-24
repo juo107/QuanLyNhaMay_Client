@@ -1,4 +1,4 @@
-import { ClockCircleOutlined, EyeOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { Button, Tag } from 'antd';
 import dayjs from 'dayjs';
 import type { IProductionOrder } from '../../types/productionOrderTypes';
@@ -90,14 +90,14 @@ export const getProductionOrderColumns = (showDetail: (record: IProductionOrder)
     align: 'center' as const,
     width: 130,
     render: (status: number) => {
-      const isRunning = status === 1;
+      const isCancelled = status === -1;
       return (
         <Tag
-          icon={isRunning ? <PlayCircleOutlined /> : <ClockCircleOutlined />}
-          color={isRunning ? 'orange' : 'blue'}
+          icon={isCancelled ? <CloseCircleOutlined /> : <CheckCircleOutlined />}
+          color={isCancelled ? '#ff4d4f' : '#52c41a'}
           className="m-0 border-none px-3 py-1 flex items-center justify-center gap-1 rounded-full text-white font-medium shadow-sm cursor-default min-w-[110px]"
         >
-          {isRunning ? 'Đang chạy' : 'Đang chờ'}
+          {isCancelled ? 'Đã hủy' : 'Bình thường'}
         </Tag>
       );
     },

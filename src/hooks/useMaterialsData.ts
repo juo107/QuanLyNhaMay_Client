@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { productionOrderApi } from '../api/productionOrderApi';
 import {
   filterMaterialsByConsumption,
-  generateSynthesizedRows,
   groupMaterialsLogic,
   normalizeMaterialConsumption
 } from '../helpers/materialsHelper';
@@ -41,20 +40,21 @@ export const useMaterialsData = (
 
       // Process Ingredients Totals
       const totals: Record<string, { total: number; unit: string; description: string }> = {};
-      const ingredients = ingRes?.data?.data ?? ingRes?.items ?? ingRes?.Items ?? ingRes?.data?.items ?? ingRes?.data?.Items ?? (Array.isArray(ingRes?.data) ? ingRes.data : (Array.isArray(ingRes) ? ingRes : []));
+      const ingredients = ingRes?.data?.data ??
+        ingRes?.data ??
+        ingRes?.items ??
+        ingRes?.Items ??
+        ingRes?.data?.items ??
+        ingRes?.data?.Items ??
+        (Array.isArray(ingRes?.data) ? ingRes.data : (Array.isArray(ingRes) ? ingRes : []));
 
       if (ingredients) {
-        const seenIngredientLines = new Set<string>();
         ingredients.forEach((item: any) => {
           const code = (item.ingredientCode || item.IngredientCode || "").toString().trim();
           if (!code) return;
 
           const qty = parseFloat(item.quantity || item.Quantity || 0);
           const unit = (item.unitOfMeasurement || item.UnitOfMeasurement || "");
-
-          const lineKey = `${code}-${qty}-${unit}`;
-          if (seenIngredientLines.has(lineKey)) return;
-          seenIngredientLines.add(lineKey);
 
           if (!totals[code]) {
             totals[code] = {
@@ -68,26 +68,53 @@ export const useMaterialsData = (
       }
 
       // Process Consumptions
+      const extractItems = (res: any) => {
+        if (!res) return [];
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res.data)) return res.data;
+        if (Array.isArray(res.items)) return res.items;
+        if (Array.isArray(res.Items)) return res.Items;
+        if (res.data && Array.isArray(res.data.items)) return res.data.items;
+        if (res.data && Array.isArray(res.data.Items)) return res.data.Items;
+        return [];
+      };
+
       const rawConsumptions: any[] = [
-        ...(dataRes?.items ?? dataRes?.Items ?? dataRes?.data?.items ?? dataRes?.data?.Items ?? (Array.isArray(dataRes) ? dataRes : [])),
-        ...(excludeRes?.items ?? excludeRes?.Items ?? excludeRes?.data?.items ?? excludeRes?.data?.Items ?? (Array.isArray(excludeRes) ? excludeRes : []))
+        ...extractItems(dataRes),
+        ...extractItems(excludeRes)
       ];
 
       const uniqueConsumptions: any[] = [];
-      const seenKeys = new Set();
+      const seenIds = new Set();
 
       rawConsumptions.forEach(m => {
-        const compositeKey = `${m.id}-${(m.batchCode || "").toString().trim().toUpperCase()}-${(m.ingredientCode || "").toString().trim().toUpperCase()}-${(m.lot || "").toString().trim().toUpperCase()}`;
-        if (!seenKeys.has(compositeKey)) {
-          seenKeys.add(compositeKey);
-          uniqueConsumptions.push(m);
+        if (m.id) {
+          if (!seenIds.has(m.id)) {
+            seenIds.add(m.id);
+            uniqueConsumptions.push(m);
+          }
+        } else {
+          // Quy tắc đặc biệt cho Mẻ 0: Chỉ lấy nếu có dữ liệu thực tế (có ID). Nếu không có ID thì bỏ qua dòng chờ của mẻ 0.
+          const bCode = (m.batchCode || "").toString().trim();
+          if (bCode === "0") return;
+
+          // Lọc trùng dòng Kế hoạch (ID null) dựa trên Mẻ + Mã vật tư
+          const planKey = `plan-${bCode}-${(m.ingredientCode || "").toString().trim()}`;
+          if (!seenIds.has(planKey)) {
+            seenIds.add(planKey);
+            uniqueConsumptions.push(m);
+          }
         }
       });
 
       const actualConsumptions = normalizeMaterialConsumption(uniqueConsumptions, totals);
-      const synthesizedRows = generateSynthesizedRows(batches, totals, actualConsumptions);
 
-      const combined = [...actualConsumptions, ...synthesizedRows].sort((a, b) => {
+      const combined = actualConsumptions.sort((a, b) => {
+        // 1. Ưu tiên các dòng chưa có ID (dòng kế hoạch) lên đầu
+        if (!a.id && b.id) return -1;
+        if (a.id && !b.id) return 1;
+
+        // 2. Sắp xếp theo Số mẻ (Batch Code)
         const batchA = a.batchCode || '';
         const batchB = b.batchCode || '';
         return batchA.localeCompare(batchB, undefined, { numeric: true, sensitivity: 'base' });

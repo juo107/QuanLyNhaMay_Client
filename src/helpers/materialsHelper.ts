@@ -10,7 +10,7 @@ export const calculatePlanQuantity = (
   ingredientsTotals: Record<string, { total: number; unit: string; description: string }>
 ): number | null => {
   const ingCode = item.ingredientCode ? item.ingredientCode.split(' - ')[0].trim() : '';
-  
+
   if (!ingredientsTotals[ingCode]) {
     return null;
   }
@@ -50,7 +50,7 @@ export const getGroupResponse = (items: IMaterialConsumption[]): string | null =
 
   // Chỉ hiện Success nếu 100% thành công
   if (allSuccess) return 'Success';
-  
+
   // Chỉ hiện Failed nếu 100% thất bại
   if (allFailed) return 'Failed';
 
@@ -109,7 +109,7 @@ export const groupMaterialsLogic = (
 
       const bCode = (item.batchCode || "").toString().trim().toUpperCase();
       const qty = typeof item.quantity === 'string' ? parseFloat(item.quantity) : (item.quantity as number);
-      
+
       // Xử lý Thực tế: Chỉ cộng dồn ID DUY NHẤT để tránh bị nhân đôi dữ liệu từ Backend
       if (item.id) {
         if (!processedActualIds.has(item.id)) {
@@ -141,7 +141,7 @@ export const groupMaterialsLogic = (
 
     group.totalPlanQuantity = totalPlanQ === null ? 0 : parseFloat((totalPlanQ as number).toFixed(2));
     group.totalQuantity = totalActualQ === null ? 0 : parseFloat((totalActualQ as number).toFixed(2));
-    
+
     (group as any).hasActualData = totalActualQ !== null;
     (group as any).hasPlanData = totalPlanQ !== null;
 
@@ -181,7 +181,7 @@ export const groupMaterialsLogic = (
   const filteredResults = results.filter(group => {
     const hasPlan = (group as any).hasPlanData === true; // Có trong công thức là hiện
     const hasActual = (group as any).hasActualData === true; // Có bản ghi thực tế là hiện
-    
+
     return hasPlan || hasActual;
   });
 
@@ -240,8 +240,8 @@ export const generateSynthesizedRows = (
 
     ingredientCodes.forEach(ingCode => {
       const isAlreadyConsumed = actualConsumptions.some(
-        act => act.ingredientCode.startsWith(ingCode) && 
-        (act.batchCode || '').toString().trim().toUpperCase() === batchNumNormalized
+        act => act.ingredientCode.startsWith(ingCode) &&
+          (act.batchCode || '').toString().trim().toUpperCase() === batchNumNormalized
       );
 
       if (!isAlreadyConsumed) {

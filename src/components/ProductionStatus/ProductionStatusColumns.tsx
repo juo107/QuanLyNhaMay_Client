@@ -106,13 +106,13 @@ export const getProductionStatusColumns = (
       render: (_: any, record: IProductionOrder) => {
         const currentRaw = (typeof record.currentBatch === 'string' ? parseInt(record.currentBatch) : (record.currentBatch)) ?? -1;
         const totalCount = record.totalBatches || 0;
-        
+
         // Tính thêm Batch 0 là 1 batch thực thụ
         const actualTotal = totalCount + 1;
         // Chuyển từ index 0 sang số thứ tự 1 (Batch 0 là mẻ thứ 1)
         const currentDisplay = currentRaw >= 0 ? currentRaw + 1 : 0;
         const percent = actualTotal > 0 ? (currentDisplay / actualTotal) * 100 : 0;
-        
+
         return (
           <div className="flex flex-col items-center py-1">
             <Progress

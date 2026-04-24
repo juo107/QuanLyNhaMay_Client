@@ -13,7 +13,7 @@ const NotFound: React.FC = () => {
         <h1 className="text-[150px] md:text-[220px] font-black text-gray-100/60 leading-none select-none transition-all duration-500 group-hover:text-[#5b4ce8]/5">
           404
         </h1>
-        
+
         {/* Main content overlay */}
         <div className="absolute inset-0 flex flex-col items-center justify-center mt-4">
           <div className="bg-white/40 backdrop-blur-sm p-8 rounded-3xl border border-white/50 shadow-xl flex flex-col items-center">
@@ -27,20 +27,20 @@ const NotFound: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="flex flex-col sm:flex-row gap-4 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <Button 
+        <Button
           icon={<ArrowLeftOutlined />}
-          size="large" 
+          size="large"
           className="h-12 px-6 rounded-xl border-gray-200 text-gray-600 font-bold hover:text-[#5b4ce8] hover:border-[#5b4ce8] transition-all"
           onClick={() => window.history.back()}
         >
           QUAY LẠI
         </Button>
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           icon={<HomeOutlined />}
-          size="large" 
+          size="large"
           className="bg-[#5b4ce8] border-[#5b4ce8] h-12 px-8 rounded-xl font-bold shadow-[0_8px_20px_-6px_rgba(91,76,232,0.5)] hover:scale-105 transition-all flex items-center justify-center"
           onClick={() => navigate({ to: '/' })}
         >

@@ -44,7 +44,7 @@ const MESCompleteBatch: React.FC = () => {
     const successCount = data.filter(i => (i.transferStatus || '').toLowerCase() === 'success' || (i.transferStatus || '').toLowerCase() === 'sent').length;
     const failedCount = data.filter(i => (i.transferStatus || '').toLowerCase() === 'error' || (i.transferStatus || '').toLowerCase() === 'failed').length;
     const pendingCount = data.filter(i => (i.transferStatus || '').toLowerCase() === 'pending' || (i.transferStatus || '').toLowerCase() === 'waiting').length;
-    
+
     const successRate = total > 0 ? (successCount / data.length) * 100 : 0;
 
     return {
@@ -76,37 +76,37 @@ const MESCompleteBatch: React.FC = () => {
 
       <Row gutter={[20, 20]}>
         <Col xs={24} sm={12} lg={6}>
-          <StatCard 
-            title="Tổng bản ghi" 
-            value={total} 
-            icon={<DatabaseFilled />} 
+          <StatCard
+            title="Tổng bản ghi"
+            value={total}
+            icon={<DatabaseFilled />}
             color="#1890ff"
             subText="Tổng số lô đã ghi nhận"
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <StatCard 
-            title="Thành công" 
-            value={stats.success} 
-            icon={<CheckCircleFilled />} 
+          <StatCard
+            title="Thành công"
+            value={stats.success}
+            icon={<CheckCircleFilled />}
             color="#52c41a"
             subText="Số lô đã truyền thành công"
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <StatCard 
-            title="Thất bại" 
-            value={stats.failed} 
-            icon={<CloseCircleFilled />} 
+          <StatCard
+            title="Thất bại"
+            value={stats.failed}
+            icon={<CloseCircleFilled />}
             color="#ff4d4f"
             subText="Các bản ghi cần kiểm tra lại"
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <StatCard 
-            title="Đang xử lý" 
-            value={stats.pending} 
-            icon={<SyncOutlined spin={loading} />} 
+          <StatCard
+            title="Đang xử lý"
+            value={stats.pending}
+            icon={<SyncOutlined spin={loading} />}
             color="#faad14"
             subText="Dữ liệu đang trong hàng chờ"
           />
@@ -139,7 +139,7 @@ const MESCompleteBatch: React.FC = () => {
         />
       </Card>
 
-      <MESCompleteBatchDetail 
+      <MESCompleteBatchDetail
         record={selectedRecord}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
